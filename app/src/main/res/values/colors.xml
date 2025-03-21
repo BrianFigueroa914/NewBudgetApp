@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="emerald">#50C878</color>
+    <color name="jade">#00A86B</color>
+    <color name="taupe">#baa68e</color>
+</resources>
