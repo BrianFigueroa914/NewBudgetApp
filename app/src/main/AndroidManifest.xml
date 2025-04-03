@@ -20,6 +20,9 @@
             android:exported="false"
             android:label="@string/title_activity_login"
             android:theme="@style/Theme.NewBudgetApp" />
+
+        <activity android:name=".DashboardActivity" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true" >

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "424195285938",
+    "firebase_url": "https://newbudgetapp-8e26f-default-rtdb.firebaseio.com",
+    "project_id": "newbudgetapp-8e26f",
+    "storage_bucket": "newbudgetapp-8e26f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424195285938:android:1f0f51c2458a4d94e4faab",
+        "android_client_info": {
+          "package_name": "com.example.newbudgetapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlzFF-nsLibyrZMnHqckQ_xMVeBqlItT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
