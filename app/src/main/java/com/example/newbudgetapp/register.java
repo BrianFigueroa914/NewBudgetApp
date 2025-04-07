@@ -4,28 +4,41 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.Firebase;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class register extends AppCompatActivity {
     //global variables
     private boolean passwordShowing = false;
     private boolean confirmPasswordShowing = false;
-
-    public static int MAX_USER_CHARS = 50;
-    public static int MAX_EMAIL_CHARS = 50;
-    public static int MAX_PHONENUMBER_CHARS = 10;
     public static int MIN_PASSWORD_CHARS = 8; //8 chars
-
+    private String userID;
+    FirebaseAuth mAuth;
+    FirebaseFirestore budgetData;
 
 
     @Override
@@ -33,6 +46,8 @@ public class register extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_register);
+        mAuth = FirebaseAuth.getInstance();
+        budgetData = FirebaseFirestore.getInstance();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.registrationPage), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -46,10 +61,8 @@ public class register extends AppCompatActivity {
         final EditText confirmPassword = findViewById(R.id.confirmPassword);
         final ImageView showPassword = findViewById(R.id.showPasswordIcon);
         final ImageView secondShowPassword = findViewById(R.id.secondShowPasswordIcon);
-        final EditText phone = findViewById(R.id.phoneNumber);
         final AppCompatButton signUpBtn = findViewById(R.id.signUpBtn);
         final TextView acctSignIn = findViewById(R.id.acctSignInBtn);
-        final TextView errorMsg = findViewById(R.id.text_input_error);
 
         //methods
         //show or hide password methods
@@ -83,62 +96,72 @@ public class register extends AppCompatActivity {
             }
         });
 
+        //Create an account button
         signUpBtn.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View v) {
 
                 //variables for input validation
-                String strUsername =  username.getText().toString();
-                String strEmail =  email.getText().toString();
-                String strPassword =  password.getText().toString();
-                String strConfirmPassword =  confirmPassword.getText().toString();
-                String strPhone =  phone.getText().toString();
+                String strUsername = String.valueOf(username.getText());
+                String strEmail =  String.valueOf(email.getText());
+                String strPassword =  String.valueOf(password.getText());
+                String strConfirmPassword =  String.valueOf(confirmPassword.getText());
 
                 //input validation
-                if (!validateInput(strUsername, strEmail, strPassword, strConfirmPassword, strPhone)){
-                    //if validation fails errorMsg will update with appropriate response
+                if (TextUtils.isEmpty(strEmail)) {
+                    Toast.makeText(register.this, "Please enter email", Toast.LENGTH_SHORT).show();
+                }
+                else if (TextUtils.isEmpty(strPassword)) {
+                    Toast.makeText(register.this, "Please enter password", Toast.LENGTH_SHORT).show();
+                }
+                else if (strPassword.length() < MIN_PASSWORD_CHARS) {
+                    Toast.makeText(register.this, "Password must be at least " + MIN_PASSWORD_CHARS + " characters long", Toast.LENGTH_SHORT).show();
+                }
+                else if (!strPassword.equals(strConfirmPassword)) {
+                    Toast.makeText(register.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    errorMsg.setText("Account successfully created continue to Login");
-                    finish();
-                }
+                    // Proceed with Firebase registration
+                    mAuth.createUserWithEmailAndPassword(strEmail, strPassword)
+                            .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    if (task.isSuccessful()) {
+                                        FirebaseUser user = mAuth.getCurrentUser();
+                                        if (user != null) {
+                                            userID = user.getUid(); //Get UID for registered user
 
+                                            //Create User object
+                                            User userData = new User(strUsername, strEmail, null);
 
-            }
-
-            // Helper method to validate input
-            private boolean validateInput(String tempUsername, String tempEmail, String tempPassword, String tempConfirmPassword, String tempPhone) {
-                if (tempUsername.isEmpty() || tempEmail.isEmpty() || tempPassword.isEmpty() || tempConfirmPassword.isEmpty() || tempPhone.isEmpty()) {
-                    errorMsg.setText("Please fill in all fields.");
-                    return false;
-                }
-                else if (tempUsername.length() > MAX_USER_CHARS) {
-                    errorMsg.setText("Username must be less than 50 characters.");
-                    return false;
-                }
-                else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(tempEmail).matches() || tempEmail.length() > MAX_EMAIL_CHARS) {   //Checks email format
-                    errorMsg.setText("Invalid email format or email exceeds 50 characters.");
-                    return false;
-                }
-                else if (tempPhone.length() != MAX_PHONENUMBER_CHARS) {
-                    errorMsg.setText("Phone number must be exactly 10 digits.");
-                    return false;
-                }
-                else if (tempPassword.length() < MIN_PASSWORD_CHARS || tempConfirmPassword.length() < MIN_PASSWORD_CHARS) {
-                    errorMsg.setText("Password must be at least 8 characters.");
-                    return false;
-                }
-                else if (!tempPassword.equals(tempConfirmPassword)) {
-                    errorMsg.setText( "Passwords do not match.");
-                    return false;
-                }
-                else {
-                    return true;
+                                            // Add data to Firestore
+                                            budgetData.collection("Users").document(userID)
+                                                    .set(userData)
+                                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                Toast.makeText(register.this, "Account successfully created", Toast.LENGTH_SHORT).show();
+                                                                finish();
+                                                            } else {
+                                                                Toast.makeText(register.this, "Failed to save user data", Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }
+                                                    });
+                                        }
+                                    }
+                                    else {
+                                        // If sign in fails, display a message to the user.
+                                        Toast.makeText(register.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
                 }
             }
         });
 
+        //Return to login page method
         acctSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -146,8 +169,5 @@ public class register extends AppCompatActivity {
                 finish();
             }
         });
-
-
-
     }
 }

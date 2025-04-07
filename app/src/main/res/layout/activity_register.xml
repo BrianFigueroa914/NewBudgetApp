@@ -100,6 +100,7 @@
                     android:padding="5dp"
                     android:src="@drawable/baseline_remove_red_eye_24" />
             </RelativeLayout>
+
             <RelativeLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent">
@@ -129,27 +130,12 @@
                     android:src="@drawable/baseline_remove_red_eye_24" />
             </RelativeLayout>
 
-            <EditText
-                android:id="@+id/phoneNumber"
-                android:layout_width="match_parent"
-                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/custom_edit_text"
-                android:drawableStart="@drawable/baseline_add_call_24"
-                android:drawablePadding="10dp"
-                android:hint="Phone Number"
-                android:inputType="phone"
-                android:digits="0123456789"
-                android:padding="10dp"
-                android:textColor="@color/black"
-                android:textColorHighlight="@color/cardview_dark_background" />
-
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/signUpBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
                 android:layout_marginStart="20dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginEnd="20dp"
                 android:background="@color/jade"
                 android:text="Sign Up"
@@ -164,7 +150,7 @@
                 android:text="Already have an account?"
                 android:textAlignment="center"
                 android:textSize="15sp"
-                android:textStyle="italic"/>
+                android:textStyle="italic" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -173,10 +159,10 @@
         android:id="@+id/text_input_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="30sp"
-        android:textColor="@color/white"
+        android:text=" "
         android:textAlignment="center"
-        android:text=" "/>
+        android:textColor="@color/white"
+        android:textSize="30sp" />
 
 
 </LinearLayout>
