@@ -161,7 +161,7 @@ public class DashboardActivity extends AppCompatActivity {
                 // Add the new income to the list
                 Map<String, Object> incomeData = new HashMap<>();
                 incomeData.put("amount", income);
-                incomeData.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+                incomeData.put("timestamp", com.google.firebase.Timestamp.now());
                 incomeList.add(incomeData);
 
                 // Update the incomeEntries in Firestore
@@ -178,7 +178,7 @@ public class DashboardActivity extends AppCompatActivity {
                 List<Map<String, Object>> initialIncomeList = new ArrayList<>();
                 Map<String, Object> incomeData = new HashMap<>();
                 incomeData.put("amount", income);
-                incomeData.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+                incomeData.put("timestamp", com.google.firebase.Timestamp.now()); //Firestore timestamp
                 initialIncomeList.add(incomeData);
 
                 userDoc.set(Collections.singletonMap("incomeEntries", initialIncomeList))
