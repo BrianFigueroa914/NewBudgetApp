@@ -16,6 +16,10 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,6 +32,7 @@ public class DashboardActivity extends AppCompatActivity {
     private LineChart lineChart;
     private List<Entry> incomeEntries = new ArrayList<>();
     private List<String> dayLabels = new ArrayList<>();
+    private String userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,11 @@ public class DashboardActivity extends AppCompatActivity {
         EditText incomeInput = findViewById(R.id.incomeInput);
         Button addIncomeBtn = findViewById(R.id.addIncomeBtn);
         TextView monthLabel = findViewById(R.id.monthLabel);
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+
+        //Get logged-in user's UID
+
 
         // Step 2: Set the dynamic month label
         String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());

@@ -26,13 +26,20 @@ import com.google.firebase.Firebase;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class register extends AppCompatActivity {
     //global variables
     private boolean passwordShowing = false;
     private boolean confirmPasswordShowing = false;
     public static int MIN_PASSWORD_CHARS = 8; //8 chars
+    private String userID;
     FirebaseAuth mAuth;
+    FirebaseFirestore budgetData;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +47,7 @@ public class register extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_register);
         mAuth = FirebaseAuth.getInstance();
+        budgetData = FirebaseFirestore.getInstance();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.registrationPage), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -120,14 +128,35 @@ public class register extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
-                                        Toast.makeText(register.this,"Account successfully created",Toast.LENGTH_SHORT).show();
-                                    } else {
+                                        FirebaseUser user = mAuth.getCurrentUser();
+                                        if (user != null) {
+                                            userID = user.getUid(); //Get UID for registered user
+
+                                            //Create User object
+                                            User userData = new User(strUsername, strEmail);
+
+                                            // Add data to Firestore
+                                            budgetData.collection("Users").document(userID)
+                                                    .set(userData)
+                                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                Toast.makeText(register.this, "Account successfully created", Toast.LENGTH_SHORT).show();
+                                                                finish();
+                                                            } else {
+                                                                Toast.makeText(register.this, "Failed to save user data", Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }
+                                                    });
+                                        }
+                                    }
+                                    else {
                                         // If sign in fails, display a message to the user.
                                         Toast.makeText(register.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             });
-                    finish();
                 }
             }
         });
@@ -140,7 +169,5 @@ public class register extends AppCompatActivity {
                 finish();
             }
         });
-
-
     }
 }
