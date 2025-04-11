@@ -1,5 +1,6 @@
 package com.example.newbudgetapp;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
@@ -52,6 +54,10 @@ public class DashboardActivity extends AppCompatActivity {
         TextView monthLabel = findViewById(R.id.monthLabel);
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
+        CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
+        CardView achievementsCardBtn = findViewById(R.id.achievementsCardBtn);
+        CardView settingsCardBtn = findViewById(R.id.settingsCardBtn);
 
         //Get logged-in user's UID
         FirebaseUser user = mAuth.getCurrentUser();
@@ -87,6 +93,20 @@ public class DashboardActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //Button functionality - Just need to create the activity and layout files
+     /*   incomeCardBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, income.class));
+        });
+        expenseCardBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, expense.class));
+        });
+        achievementsCardBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, achievements.class));
+        });
+        settingsCardBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, settings.class));
+        }); */
     }
 
 //Methods
