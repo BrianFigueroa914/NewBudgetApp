@@ -95,7 +95,8 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         //Button functionality - Just need to create the activity and layout files
-     /*   incomeCardBtn.setOnClickListener(v -> {
+        /*
+        incomeCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, income.class));
         });
         expenseCardBtn.setOnClickListener(v -> {
@@ -104,9 +105,10 @@ public class DashboardActivity extends AppCompatActivity {
         achievementsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, achievements.class));
         });
+        */
         settingsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, settings.class));
-        }); */
+        });
     }
 
 //Methods

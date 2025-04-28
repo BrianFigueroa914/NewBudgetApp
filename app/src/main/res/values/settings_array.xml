@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="options_list" >
+        <item>Everyday</item>
+        <item>Every other day</item>
+        <item>Every 2 days</item>
+        <item>Every 3 days</item>
+        <item>Every 4 days</item>
+        <item>Weekly</item>
+    </string-array>
+</resources>
