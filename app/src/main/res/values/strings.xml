@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">New Budget App</string>
     <string name="title_activity_login">login</string>
+    <string name="bill_title">Bill Title</string>
+    <string name="bill_details">Bill Details</string>
+    <string name="schedule_reminder">Schedule Reminder</string>
+    <string name="select_an_option">Select an option</string>
+    <string name="confirm">Confirm</string>
+    <string name="frequency_query">How often would you like to update your info?</string>
+
 </resources>

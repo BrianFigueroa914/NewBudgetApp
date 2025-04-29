@@ -133,7 +133,7 @@ public class register extends AppCompatActivity {
                                             userID = user.getUid(); //Get UID for registered user
 
                                             //Create User object
-                                            User userData = new User(strUsername, strEmail);
+                                            User userData = new User(strUsername, strEmail, null);
 
                                             // Add data to Firestore
                                             budgetData.collection("Users").document(userID)
