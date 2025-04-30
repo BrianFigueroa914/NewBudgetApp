@@ -15,17 +15,30 @@
     android:layout_marginTop="20dp">
 
     <TextView
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/welcomeText"
         android:text="Welcome"
         android:textSize="35sp"
         android:textColor="@color/taupe"
-        android:layout_marginStart="18dp"
         android:layout_marginTop="40dp"
+        android:layout_marginLeft="20dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="@id/lineChart"/>
+
+    <TextView
+        android:id="@+id/usernameText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User"
+        android:textSize="35sp"
+        android:textColor="@color/taupe"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="25dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/welcomeText"/>
 
 
     <TextView

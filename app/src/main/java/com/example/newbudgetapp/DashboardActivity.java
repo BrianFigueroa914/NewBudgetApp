@@ -48,6 +48,7 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.dashboard_activity);
 
         // Step 1: Get references to all views
+        TextView usernameText = findViewById(R.id.usernameText);
         lineChart = findViewById(R.id.lineChart);
         EditText incomeInput = findViewById(R.id.incomeInput);
         Button addIncomeBtn = findViewById(R.id.addIncomeBtn);

@@ -23,6 +23,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Calendar;
 
@@ -68,25 +69,26 @@ public class settings extends AppCompatActivity {
         }
     }
 
-    Button submitButton;
-    ImageButton nextPageButton;
-    TextInputEditText title;
-    TextInputEditText message;
-    TimePicker timePicker;
-    DatePicker datePicker;
+
+
+
     int requestCode = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        submitButton = findViewById(R.id.submitButton);
-        nextPageButton = findViewById(R.id.settings2btn);
-        title = findViewById(R.id.titleET);
-        message = findViewById(R.id.messageET);
+        Button submitButton = findViewById(R.id.submitButton);
+        ImageButton nextPageButton = findViewById(R.id.settings2btn);
+        Button homeBtn = findViewById(R.id.homeBtn);
+        Button signOutBtn = findViewById(R.id.signOutBtn);
 
-        timePicker = findViewById(R.id.timePicker);
-        datePicker = findViewById(R.id.datePicker);
+
+        TextInputEditText title = findViewById(R.id.titleET);
+        TextInputEditText message = findViewById(R.id.messageET);
+
+        TimePicker timePicker = findViewById(R.id.timePicker);
+        DatePicker datePicker = findViewById(R.id.datePicker);
 
         //button to set reminder
         submitButton.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +114,23 @@ public class settings extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        //Home button
+        homeBtn.setOnClickListener(v -> {
+           startActivity(new Intent(settings.this, DashboardActivity.class));
+        });
+
+        signOutBtn.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Toast.makeText(settings.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+
+            // Redirect to the login activity
+            Intent intent = new Intent(settings.this, login.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish(); // Finish the current activity
+        });
+
     }
 
     private void setReminder(
