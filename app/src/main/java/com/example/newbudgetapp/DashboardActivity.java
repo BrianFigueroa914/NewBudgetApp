@@ -48,6 +48,7 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.dashboard_activity);
 
         // Step 1: Get references to all views
+        TextView usernameText = findViewById(R.id.usernameText);
         lineChart = findViewById(R.id.lineChart);
         EditText incomeInput = findViewById(R.id.incomeInput);
         Button addIncomeBtn = findViewById(R.id.addIncomeBtn);
@@ -61,10 +62,13 @@ public class DashboardActivity extends AppCompatActivity {
 
         //Get logged-in user's UID
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null)
+        if (user != null) {
             userID = user.getUid();
+            fetchPreviousData(); // Fetch and display existing data
+        }
         else
-            finish(); //Redirect to login
+            finish(); // Redirect to login
+
 
         // Step 2: Set the dynamic month label
         String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
@@ -211,6 +215,40 @@ public class DashboardActivity extends AppCompatActivity {
                                 Toast.makeText(DashboardActivity.this, "Failed to save income, please retry", Toast.LENGTH_SHORT).show();
                             }
                         });
+            }
+        });
+    }
+
+    //Load previous session data for user
+    private void fetchPreviousData() {
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
+
+        userDoc.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                // Retrieve existing income entries
+                List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
+                if (incomeList != null) {
+                    incomeEntries.clear();
+                    dayLabels.clear();
+
+                    for (int i = 0; i < incomeList.size(); i++) {
+                        Map<String, Object> incomeData = incomeList.get(i);
+                        if (incomeData.containsKey("amount") && incomeData.containsKey("timestamp")) {
+                            float amount = ((Number) incomeData.get("amount")).floatValue();
+                            String dayLabel = new SimpleDateFormat("d", Locale.getDefault())
+                                    .format(((com.google.firebase.Timestamp) incomeData.get("timestamp")).toDate());
+
+                            incomeEntries.add(new Entry(i, amount));
+                            dayLabels.add(dayLabel);
+                        }
+                    }
+
+                    // Update the chart after fetching data
+                    updateChart();
+                }
+            } else {
+                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
             }
         });
     }
