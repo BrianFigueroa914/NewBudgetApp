@@ -88,7 +88,7 @@
 
     <Button
         android:id="@+id/homeBtn"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="25sp"
         android:layout_gravity="center"
         android:text="Home"
         android:layout_width="wrap_content"
@@ -96,7 +96,7 @@
         android:layout_height="wrap_content"/>
     <Button
         android:id="@+id/signOutBtn"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="25sp"
         android:layout_gravity="center"
         android:text="Sign Out"
         android:layout_width="wrap_content"
