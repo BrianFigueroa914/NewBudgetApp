@@ -91,8 +91,7 @@ public class settings2 extends AppCompatActivity {
     MaterialAutoCompleteTextView autoCompleteTextView;
     TextInputLayout optionTextInput;
     Button confirmButton;
-    ImageButton backButton;
-    ImageButton homeButton;
+    ImageButton settings2BackBtn;
     static int frequency;
     static int alarmRequestCode = 1045;
     @Override
@@ -104,8 +103,7 @@ public class settings2 extends AppCompatActivity {
         autoCompleteTextView = findViewById(R.id.optionInput);
         confirmButton = findViewById(R.id.setAlarmBtn);
 
-        backButton = findViewById(R.id.backBtn);
-        homeButton = findViewById(R.id.homeBtn2);
+        settings2BackBtn = findViewById(R.id.settings2BackBtn);
 
         //button to set alarm
         confirmButton.setOnClickListener(new View.OnClickListener() {
@@ -123,22 +121,14 @@ public class settings2 extends AppCompatActivity {
                 }
             }
         });
-        //buttons to go back one page/go back to dashboard
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(settings2.this, settings.class);
-                startActivity(intent);
-            }
-        });
-        homeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(settings2.this, DashboardActivity.class);
-                startActivity(intent);
-            }
-        });
 
+        //button to go back to settings home page
+        settings2BackBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(settings2.this, settingsHome.class));
+            }
+        });
 
     }
 

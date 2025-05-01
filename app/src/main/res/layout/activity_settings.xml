@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".settings">
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -79,28 +79,11 @@
         android:layout_height="wrap_content"/>
 
     <ImageButton
-        android:id="@+id/settings2btn"
+        android:id="@+id/settingsBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="50dp"
-        android:src="@drawable/round_arrow_forward_24" />
-
-    <Button
-        android:id="@+id/homeBtn"
-        android:layout_marginTop="25sp"
-        android:layout_gravity="center"
-        android:text="Home"
-        android:layout_width="wrap_content"
-        android:backgroundTint="@color/jade"
-        android:layout_height="wrap_content"/>
-    <Button
-        android:id="@+id/signOutBtn"
-        android:layout_marginTop="25sp"
-        android:layout_gravity="center"
-        android:text="Sign Out"
-        android:layout_width="wrap_content"
-        android:backgroundTint="@color/jade"
-        android:layout_height="wrap_content"/>
+        android:src="@drawable/round_arrow_back_24" />
 
 </LinearLayout>

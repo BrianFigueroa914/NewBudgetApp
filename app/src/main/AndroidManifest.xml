@@ -15,6 +15,9 @@
         android:theme="@style/Theme.NewBudgetApp"
         tools:targetApi="31" >
         <activity
+            android:name=".settingsHome"
+            android:exported="false"/>
+        <activity
             android:name=".settings"
             android:exported="false"/>
         <receiver

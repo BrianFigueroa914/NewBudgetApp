@@ -111,7 +111,7 @@ public class DashboardActivity extends AppCompatActivity {
         });
         */
         settingsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, settings.class));
+            startActivity(new Intent(DashboardActivity.this, settingsHome.class));
         });
     }
 

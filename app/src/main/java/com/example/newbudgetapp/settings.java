@@ -70,8 +70,6 @@ public class settings extends AppCompatActivity {
     }
 
 
-
-
     int requestCode = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,10 +77,7 @@ public class settings extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         Button submitButton = findViewById(R.id.submitButton);
-        ImageButton nextPageButton = findViewById(R.id.settings2btn);
-        Button homeBtn = findViewById(R.id.homeBtn);
-        Button signOutBtn = findViewById(R.id.signOutBtn);
-
+        ImageButton settingsBackBtn = findViewById(R.id.settingsBackBtn);
 
         TextInputEditText title = findViewById(R.id.titleET);
         TextInputEditText message = findViewById(R.id.messageET);
@@ -106,29 +101,12 @@ public class settings extends AppCompatActivity {
             }
         });
 
-        //button to go to next page
-        nextPageButton.setOnClickListener(new View.OnClickListener() {
+        //button to go back to settings home page
+        settingsBackBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(settings.this, settings2.class);
-                startActivity(intent);
+                startActivity(new Intent(settings.this, settingsHome.class));
             }
-        });
-
-        //Home button
-        homeBtn.setOnClickListener(v -> {
-           startActivity(new Intent(settings.this, DashboardActivity.class));
-        });
-
-        signOutBtn.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Toast.makeText(settings.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
-
-            // Redirect to the login activity
-            Intent intent = new Intent(settings.this, login.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish(); // Finish the current activity
         });
 
     }

@@ -58,23 +58,13 @@
         android:textSize="15sp"/>
 
     <ImageButton
-        android:id="@+id/homeBtn2"
+        android:id="@+id/settings2BackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_centerVertical="true"
         android:layout_marginTop="600dp"
-        android:layout_marginEnd="220dp"
-        android:src="@drawable/round_bungalow_24" />
-
-    <ImageButton
-        android:id="@+id/backBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="600dp"
-        android:layout_marginEnd="150dp"
+        android:layout_centerInParent="true"
         android:src="@drawable/round_arrow_back_24" />
 
 </RelativeLayout>

@@ -5,4 +5,5 @@
     <color name="emerald">#50C878</color>
     <color name="jade">#00A86B</color>
     <color name="taupe">#baa68e</color>
+    <color name="transparent">#00000000</color>
 </resources>
