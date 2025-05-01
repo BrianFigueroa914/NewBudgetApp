@@ -18,11 +18,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/welcomeText"
-        android:text="Welcome"
+        android:text="@string/welcome"
         android:textSize="35sp"
         android:textColor="@color/taupe"
         android:layout_marginTop="40dp"
-        android:layout_marginLeft="20dp"
+        android:layout_marginStart="20dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="@id/lineChart"/>
@@ -31,7 +31,7 @@
         android:id="@+id/usernameText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="User"
+        android:text="@string/user"
         android:textSize="35sp"
         android:textColor="@color/taupe"
         android:layout_marginTop="40dp"
@@ -39,7 +39,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="@id/welcomeText"/>
-
 
     <TextView
         android:id="@+id/monthLabel"
@@ -54,7 +53,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/lineChart"
         android:layout_width="0dp"
@@ -67,10 +65,10 @@
         android:layout_marginEnd="16dp" />
 
     <EditText
-        android:id="@+id/incomeInput"
+        android:id="@+id/monetaryInput"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Enter income"
+        android:hint="@string/enter_income"
         android:inputType="numberDecimal"
         app:layout_constraintTop_toBottomOf="@id/lineChart"
         app:layout_constraintStart_toStartOf="parent"
@@ -79,12 +77,23 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp" />
 
+    <Spinner
+        android:id="@+id/expenseCategorySpinner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/monetaryInput"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginLeft="16dp"/>
+
     <Button
-        android:id="@+id/addIncomeBtn"
+        android:id="@+id/addDataBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Income"
-        app:layout_constraintTop_toBottomOf="@id/incomeInput"
+        android:text="@string/add_income"
+        app:layout_constraintTop_toBottomOf="@id/expenseCategorySpinner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
@@ -99,7 +108,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/addIncomeBtn">
+        app:layout_constraintTop_toBottomOf="@+id/addDataBtn">
 
         <androidx.cardview.widget.CardView
             android:layout_width="0dp"
@@ -117,7 +126,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/incometext"
-                    android:text="Income"
+                    android:text="@string/income"
                     android:textSize="20dp"
                     android:textColor="@color/taupe"
                     android:layout_marginTop="10dp"
@@ -150,7 +159,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/expenseText"
-                    android:text="Expense"
+                    android:text="@string/expense"
                     android:textSize="20dp"
                     android:textColor="@color/taupe"
                     android:layout_marginTop="10dp"
@@ -183,6 +192,85 @@
         <androidx.cardview.widget.CardView
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:id="@+id/savingsCardBtn"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            app:cardElevation="20dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/savingstext"
+                    android:text="@string/savings"
+                    android:textSize="20dp"
+                    android:textColor="@color/taupe"
+                    android:layout_marginTop="10dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@+id/savingsImg"/>
+
+                <ImageView
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:id="@+id/savingsImg"
+                    android:src="@drawable/_97227_money_piggy_save_money_savings_icon"
+                    android:layout_marginTop="15dp"
+                    android:layout_centerHorizontal="true" />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/visualsCardBtn"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            app:cardElevation="20dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/visualText"
+                    android:text="@string/visual_analytics"
+                    android:textSize="20dp"
+                    android:textColor="@color/taupe"
+                    android:layout_marginTop="10dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@+id/visualsImage"/>
+
+                <ImageView
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:id="@+id/visualsImage"
+                    android:src="@drawable/vecteezy_presentation_vector_icon_design_25433254_removebg_preview"
+                    android:layout_marginTop="15dp"
+                    android:layout_centerHorizontal="true" />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="175dp"
+        android:id="@+id/cardRow3"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        android:padding="10dp"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardRow2">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:id="@+id/achievementsCardBtn"
             android:layout_margin="10dp"
             android:layout_weight="1"
@@ -196,7 +284,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/achievementsText"
-                    android:text="Achievements"
+                    android:text="@string/achievements"
                     android:textSize="20dp"
                     android:textColor="@color/taupe"
                     android:layout_marginTop="10dp"
@@ -229,7 +317,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/settingsText"
-                    android:text="Settings"
+                    android:text="@string/settings"
                     android:textSize="20dp"
                     android:textColor="@color/taupe"
                     android:layout_marginTop="10dp"
@@ -247,9 +335,5 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 
-
-
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
+</ScrollView>
