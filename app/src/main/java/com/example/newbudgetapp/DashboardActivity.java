@@ -149,10 +149,10 @@ public class DashboardActivity extends AppCompatActivity {
             expenseCategorySpinner.setVisibility(View.VISIBLE); // Make it visible
         });
 
-/*      savingsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, savings.class));
+        savingsBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, SavingsActivity.class));
         });
-        visualsCardBtn.setOnClickListener(v -> {
+/*        visualsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, visualAnalytics.class));
         });*/
         achievementsCardBtn.setOnClickListener(v -> {
