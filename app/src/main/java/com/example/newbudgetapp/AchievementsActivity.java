@@ -27,7 +27,7 @@ public class AchievementsActivity extends AppCompatActivity {
             new Achievement("Save $1,000 🎉", "10.1% of users have unlocked this", true),
             new Achievement("Save $5,000 🏆", "7.0% of users have unlocked this", false),
             new Achievement("Save $10,000 💎", "2.6% of users have unlocked this", false),
-            new Achievement("\"No Spend Day\" 🚫🛍️", "50.7% of users have unlocked this", false),
+            new Achievement("No Spend Day 🚫🛍️", "50.7% of users have unlocked this", false),
             new Achievement("No eating out for 7 days 🍱", "36.6% of users have unlocked this", true),
             new Achievement("No impulse purchases for a week 🚫💳", "7.8% of users have unlocked this", false),
             new Achievement("Have less than 3 subscription services 📉", "33.0% of users have unlocked this", true),
