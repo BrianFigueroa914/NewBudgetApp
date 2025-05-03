@@ -19,5 +19,6 @@
     <string name="settings">Settings</string>
     <string name="bill_reminders">Bill Reminders</string>
     <string name="schedule_updates">Schedule Updates</string>
+    <string name="my_savings_goal">My Savings Goal</string>
 
 </resources>

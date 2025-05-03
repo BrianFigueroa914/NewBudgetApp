@@ -1,4 +1,6 @@
 package com.example.newbudgetapp;
+import com.example.newbudgetapp.AchievementsActivity;
+
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -71,8 +73,7 @@ public class DashboardActivity extends AppCompatActivity {
         if (user != null) {
             userID = user.getUid();
             fetchPreviousData(); // Fetch and display existing data
-        }
-        else
+        } else
             finish(); // Redirect to login
 
 
@@ -97,7 +98,7 @@ public class DashboardActivity extends AppCompatActivity {
                     //Handle data Input whether in income or expense
                     if (isIncomeMode) {
                         // Handle income addition
-                        storeIncomeData(userID,amount);
+                        storeIncomeData(userID, amount);
 
                         // Get current day of month and store it as x-axis label
                         String currentDay = new SimpleDateFormat("d", Locale.getDefault()).format(new Date());
@@ -148,22 +149,22 @@ public class DashboardActivity extends AppCompatActivity {
             expenseCategorySpinner.setVisibility(View.VISIBLE); // Make it visible
         });
 
-/*      savingsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, savings.class));
+        savingsBtn.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, SavingsActivity.class));
         });
-        visualsCardBtn.setOnClickListener(v -> {
+/*        visualsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, visualAnalytics.class));
-        });
+        });*/
         achievementsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, achievements.class));
+            startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class));
         });
-        */
+
         settingsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, settingsHome.class));
         });
     }
 
-//Methods
+    //Methods
     private void prepareChartDataForCurrentMonth() {
         incomeEntries.clear(); // Clear previous data
         dayLabels.clear(); // Clear previous labels
@@ -221,9 +222,8 @@ public class DashboardActivity extends AppCompatActivity {
 
                     updateChart(); // Update the chart after preparing data
                 }
-            }
-            else
-            Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+            } else
+                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
         });
     }
 
