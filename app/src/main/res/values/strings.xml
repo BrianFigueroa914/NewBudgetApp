@@ -20,5 +20,9 @@
     <string name="bill_reminders">Bill Reminders</string>
     <string name="schedule_updates">Schedule Updates</string>
     <string name="my_savings_goal">My Savings Goal</string>
+    <string name="rent">Rent</string>
+    <string name="expense_categories">Expense Categories</string>
+    <string name="food">Food</string>
+    <string name="groceries">Groceries</string>
 
 </resources>

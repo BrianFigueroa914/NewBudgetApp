@@ -44,7 +44,7 @@ public class DashboardActivity extends AppCompatActivity {
     private LineChart lineChart;
     private List<Entry> incomeEntries = new ArrayList<>();
     private List<String> dayLabels = new ArrayList<>();
-    private String[] categories = {"Rent", "Food", "Utilities", "Transportation", "Entertainment", "Other"};
+    private String[] categories = {"Rent", "Groceries", "Utilities", "Going Out", "Transportation", "Entertainment", "Other"};
     private String userID;
 
     @Override
@@ -152,9 +152,9 @@ public class DashboardActivity extends AppCompatActivity {
         savingsBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, SavingsActivity.class));
         });
-/*        visualsCardBtn.setOnClickListener(v -> {
+        visualsBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, visualAnalytics.class));
-        });*/
+        });
         achievementsCardBtn.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class));
         });
