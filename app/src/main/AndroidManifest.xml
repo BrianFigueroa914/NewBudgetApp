@@ -45,17 +45,19 @@
             android:exported="false" />
         <activity
             android:name=".login"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_login"
-            android:theme="@style/Theme.NewBudgetApp" />
-        <activity android:name=".DashboardActivity" />
-        <activity
-            android:name=".LeaderboardActivity"
-            android:exported="true">
+            android:theme="@style/Theme.NewBudgetApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".DashboardActivity" />
+        <activity
+            android:name=".LeaderboardActivity"
+            android:exported="false">
+
         </activity>
         <activity
             android:name=".AchievementsActivity"
