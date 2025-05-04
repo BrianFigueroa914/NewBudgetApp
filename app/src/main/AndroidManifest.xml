@@ -50,11 +50,10 @@
             android:theme="@style/Theme.NewBudgetApp" />
         <activity android:name=".DashboardActivity" />
         <activity
-            android:name=".MainActivity"
+            android:name=".LeaderboardActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
