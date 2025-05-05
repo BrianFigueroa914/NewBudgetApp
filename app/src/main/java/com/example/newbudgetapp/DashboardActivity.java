@@ -51,6 +51,8 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dashboard_activity);
+        TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
+
 
         // Step 1: Get references to all views
         TextView usernameText = findViewById(R.id.usernameText);
@@ -245,36 +247,43 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void updateChart() {
-        LineDataSet dataSet = new LineDataSet(incomeEntries, "Monthly Balance"); // Change label to "Monthly Balance"
-        dataSet.setColor(Color.GREEN); // Optional: Use a distinct color for balance
+        LineDataSet dataSet = new LineDataSet(incomeEntries, "Monthly Balance");
+        dataSet.setColor(Color.GREEN);
         dataSet.setCircleColor(Color.GREEN);
         dataSet.setLineWidth(2f);
         dataSet.setCircleRadius(4f);
         dataSet.setValueTextSize(12f);
+        dataSet.setDrawValues(true);
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Optional: smoother curve
 
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
 
-        // Add/redraw budget line
-        float budget = 1100f; // Budget as a reference
-        lineChart.getAxisLeft().removeAllLimitLines();
-        LimitLine budgetLine = new LimitLine(budget, "Budget");
-        budgetLine.setLineColor(Color.RED);
-        budgetLine.setLineWidth(2f);
-        budgetLine.setTextColor(Color.RED);
-        budgetLine.setTextSize(12f);
-        lineChart.getAxisLeft().addLimitLine(budgetLine);
+        // ✅ Update the visible balance based on the last data point
+        if (!incomeEntries.isEmpty()) {
+            float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
+            TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
+            incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
+        }
 
-        // Format X axis using day labels
+        // 📊 Chart appearance settings
+        lineChart.getAxisLeft().removeAllLimitLines();
+        lineChart.getDescription().setEnabled(false);
+        lineChart.getLegend().setEnabled(true);
+        lineChart.getAxisRight().setEnabled(false);
+
+        // X Axis formatting
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
         xAxis.setGranularity(1f);
         xAxis.setLabelRotationAngle(-45);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(Color.DKGRAY);
 
-        lineChart.getAxisRight().setEnabled(false);
-        lineChart.getDescription().setEnabled(false);
-        lineChart.invalidate(); // Refresh chart
+        // Y Axis formatting
+        lineChart.getAxisLeft().setTextColor(Color.DKGRAY);
+
+        lineChart.invalidate(); // Refresh the chart
     }
 
     // Custom formatter to show day numbers (12, 13, etc.)
@@ -412,10 +421,14 @@ public class DashboardActivity extends AppCompatActivity {
                     incomeEntries.clear();
                     dayLabels.clear();
 
+                    float totalIncome = 0f; // NEW: Track the total income
+
                     for (int i = 0; i < incomeList.size(); i++) {
                         Map<String, Object> incomeData = incomeList.get(i);
                         if (incomeData.containsKey("amount") && incomeData.containsKey("timestamp")) {
                             float amount = ((Number) incomeData.get("amount")).floatValue();
+                            totalIncome += amount; // NEW: Add to total
+
                             String dayLabel = new SimpleDateFormat("d", Locale.getDefault())
                                     .format(((com.google.firebase.Timestamp) incomeData.get("timestamp")).toDate());
 
@@ -424,8 +437,11 @@ public class DashboardActivity extends AppCompatActivity {
                         }
                     }
 
-                    // Update the chart after fetching data
-                    updateChart();
+                    // ✅ Display the balance
+                    TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
+                    incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", totalIncome));
+
+                    updateChart(); // Update the chart after fetching data
                 }
             } else {
                 Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
