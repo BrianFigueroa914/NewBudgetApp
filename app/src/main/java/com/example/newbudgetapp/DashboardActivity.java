@@ -92,26 +92,31 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String inputAmount = textHintInput.getText().toString().trim();
-                if (!inputAmount.isEmpty()) {
+
+                if (inputAmount.isEmpty()) {
+                    Toast.makeText(DashboardActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                try {
                     float amount = Float.parseFloat(inputAmount);
+                    if (Float.isNaN(amount) || Float.isInfinite(amount)) throw new NumberFormatException();
 
-                    //Handle data Input whether in income or expense
+                    // Handle data Input whether in income or expense
                     if (isIncomeMode) {
-                        // Handle income addition
                         storeIncomeData(userID, amount);
-
-                        // Get current day of month and store it as x-axis label
                         String currentDay = new SimpleDateFormat("d", Locale.getDefault()).format(new Date());
                         incomeEntries.add(new Entry(incomeEntries.size(), amount));
                         dayLabels.add(currentDay);
                     } else {
-                        // Handle expense addition
                         String selectedCategory = expenseCategorySpinner.getSelectedItem().toString();
                         storeExpenseData(userID, selectedCategory, amount);
                     }
 
                     updateChart();
                     textHintInput.setText(""); // Clear input after adding
+                } catch (NumberFormatException e) {
+                    Toast.makeText(DashboardActivity.this, "Invalid number. Please enter a valid amount.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
