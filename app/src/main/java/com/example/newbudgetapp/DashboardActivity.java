@@ -72,10 +72,22 @@ public class DashboardActivity extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             userID = user.getUid();
-            fetchPreviousData(); // Fetch and display existing data
-        } else
-            finish(); // Redirect to login
 
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            DocumentReference userDoc = db.collection("Users").document(userID);
+            userDoc.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String username = documentSnapshot.getString("username");
+                    if (username != null && !username.isEmpty()) {
+                        usernameText.setText("Welcome " + username);
+                    }
+                }
+            });
+
+            fetchPreviousData(); // Fetch and display existing data
+        } else {
+            finish(); // Redirect to login
+        }
 
         // Step 2: Set the dynamic month label
         String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
