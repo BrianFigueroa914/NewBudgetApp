@@ -46,15 +46,15 @@ public class DashboardActivity extends AppCompatActivity {
     private List<String> dayLabels = new ArrayList<>();
     private String[] categories = {"Rent", "Groceries", "Utilities", "Going Out", "Transportation", "Entertainment", "Other"};
     private String userID;
+    private com.google.firebase.Timestamp lastTimestamp = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dashboard_activity);
+
         TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
-
-
-        // Step 1: Get references to all views
         TextView usernameText = findViewById(R.id.usernameText);
         lineChart = findViewById(R.id.lineChart);
         EditText textHintInput = findViewById(R.id.monetaryInput);
@@ -62,7 +62,7 @@ public class DashboardActivity extends AppCompatActivity {
         Spinner expenseCategorySpinner = findViewById(R.id.expenseCategorySpinner);
         TextView monthLabel = findViewById(R.id.monthLabel);
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
-//        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+
         CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
         CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
         CardView savingsBtn = findViewById(R.id.savingsCardBtn);
@@ -70,7 +70,6 @@ public class DashboardActivity extends AppCompatActivity {
         CardView achievementsCardBtn = findViewById(R.id.achievementsCardBtn);
         CardView settingsCardBtn = findViewById(R.id.settingsCardBtn);
 
-        //Get logged-in user's UID
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             userID = user.getUid();
@@ -86,165 +85,140 @@ public class DashboardActivity extends AppCompatActivity {
                 }
             });
 
-            fetchPreviousData(); // Fetch and display existing data
+            // ✅ INITIAL LOAD OF CHART DATA
+            prepareChartDataForCurrentMonth();  // This sets up the chart and lastTimestamp
         } else {
-            finish(); // Redirect to login
+            finish(); // No user logged in
         }
 
-        // Step 2: Set the dynamic month label
+        // Set current month label
         String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
         monthLabel.setText(currentMonth + " Summary");
 
-        //Step 3: Prepare chart for current month summary
-        prepareChartDataForCurrentMonth();
+        // Handle input
+        addDataBtn.setOnClickListener(v -> {
+            String inputAmount = textHintInput.getText().toString().trim();
 
-        // Step 4: Initial chart setup
-        updateChart();
+            if (inputAmount.isEmpty()) {
+                Toast.makeText(DashboardActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        // Step 5: Handle data input on button click
-        addDataBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String inputAmount = textHintInput.getText().toString().trim();
+            try {
+                float amount = Float.parseFloat(inputAmount);
+                if (Float.isNaN(amount) || Float.isInfinite(amount)) throw new NumberFormatException();
 
-                if (inputAmount.isEmpty()) {
-                    Toast.makeText(DashboardActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
-                    return;
+                if (isIncomeMode) {
+                    storeIncomeData(userID, amount);  // This now calls prepareChartAppend()
+                } else {
+                    String selectedCategory = expenseCategorySpinner.getSelectedItem().toString();
+                    storeExpenseData(userID, selectedCategory, amount);  // Also calls prepareChartAppend()
                 }
 
-                try {
-                    float amount = Float.parseFloat(inputAmount);
-                    if (Float.isNaN(amount) || Float.isInfinite(amount)) throw new NumberFormatException();
+                textHintInput.setText("");  // Clear input
 
-                    // Handle data Input whether in income or expense
-                    if (isIncomeMode) {
-                        storeIncomeData(userID, amount);
-                        String currentDay = new SimpleDateFormat("d", Locale.getDefault()).format(new Date());
-                        incomeEntries.add(new Entry(incomeEntries.size(), amount));
-                        dayLabels.add(currentDay);
-                    } else {
-                        String selectedCategory = expenseCategorySpinner.getSelectedItem().toString();
-                        storeExpenseData(userID, selectedCategory, amount);
-                    }
-
-                    updateChart();
-                    textHintInput.setText(""); // Clear input after adding
-                } catch (NumberFormatException e) {
-                    Toast.makeText(DashboardActivity.this, "Invalid number. Please enter a valid amount.", Toast.LENGTH_SHORT).show();
-                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(DashboardActivity.this, "Invalid number. Please enter a valid amount.", Toast.LENGTH_SHORT).show();
             }
         });
 
-        //Populates spinner with categories
+        // Set up category spinner
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         expenseCategorySpinner.setAdapter(adapter);
 
-        //Detects which category user chose
         expenseCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedCategory = parent.getItemAtPosition(position).toString();
+                // Optional: do something with selectedCategory
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
+            public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        //Button functionality - Just need to create the activity and layout files
+        // Mode toggle buttons
         incomeCardBtn.setOnClickListener(v -> {
             isIncomeMode = true;
             textHintInput.setHint("Enter income");
             addDataBtn.setText("Add Income");
-            expenseCategorySpinner.setVisibility(View.GONE); // Hide spinner when entering income
+            expenseCategorySpinner.setVisibility(View.GONE);
         });
+
         expenseCardBtn.setOnClickListener(v -> {
             isIncomeMode = false;
             textHintInput.setHint("Enter expense");
             addDataBtn.setText("Add Expense");
-            // Add a dropdown menu for expense categories
-            expenseCategorySpinner.setVisibility(View.VISIBLE); // Make it visible
+            expenseCategorySpinner.setVisibility(View.VISIBLE);
         });
 
-        savingsBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, SavingsActivity.class));
-        });
-        visualsBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, visualAnalytics.class));
-        });
-        achievementsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class));
-        });
-
-        settingsCardBtn.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, settingsHome.class));
-        });
+        // Navigation buttons
+        savingsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, SavingsActivity.class)));
+        visualsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, visualAnalytics.class)));
+        achievementsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class)));
+        settingsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, settingsHome.class)));
     }
+
 
     //Methods
     private void prepareChartDataForCurrentMonth() {
-        incomeEntries.clear(); // Clear previous data
-        dayLabels.clear(); // Clear previous labels
+        incomeEntries.clear();
+        dayLabels.clear();
 
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                // Get income and expense data
                 List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
-                List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenses");
+                List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
-                if (incomeList != null || expenseList != null) {
-                    Map<String, Float> dailyBalances = new HashMap<>();
+                // Use a list of timestamped changes (positive for income, negative for expense)
+                List<Map<String, Object>> allEntries = new ArrayList<>();
 
-                    String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d", Locale.getDefault());
+                if (incomeList != null) allEntries.addAll(incomeList);
+                if (expenseList != null) allEntries.addAll(expenseList);
 
-                    // Process Income
-                    if (incomeList != null) {
-                        for (Map<String, Object> incomeData : incomeList) {
-                            Date incomeDate = ((com.google.firebase.Timestamp) incomeData.get("timestamp")).toDate();
-                            String dayLabel = new SimpleDateFormat("d", Locale.getDefault()).format(incomeDate);
+                // Sort all entries by timestamp
+                allEntries.sort((a, b) -> {
+                    Date dateA = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
+                    Date dateB = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
+                    return dateA.compareTo(dateB);
+                });
 
-                            if (currentMonth.equals(new SimpleDateFormat("MMMM", Locale.getDefault()).format(incomeDate))) {
-                                float amount = ((Number) incomeData.get("amount")).floatValue();
-                                dailyBalances.put(dayLabel, dailyBalances.getOrDefault(dayLabel, 0f) + amount);
-                            }
-                        }
+                float runningBalance = 0f;
+
+                for (Map<String, Object> entry : allEntries) {
+                    float amount = ((Number) entry.get("amount")).floatValue();
+
+                    // Check if it's an expense
+                    if (entry.containsKey("category")) {
+                        amount = -amount;
                     }
 
-                    // Process Expenses
-                    if (expenseList != null) {
-                        for (Map<String, Object> expenseData : expenseList) {
-                            Date expenseDate = ((com.google.firebase.Timestamp) expenseData.get("timestamp")).toDate();
-                            String dayLabel = new SimpleDateFormat("d", Locale.getDefault()).format(expenseDate);
+                    runningBalance += amount;
 
-                            if (currentMonth.equals(new SimpleDateFormat("MMMM", Locale.getDefault()).format(expenseDate))) {
-                                float amount = ((Number) expenseData.get("amount")).floatValue();
-                                dailyBalances.put(dayLabel, dailyBalances.getOrDefault(dayLabel, 0f) - amount);
-                            }
-                        }
-                    }
+                    incomeEntries.add(new Entry(incomeEntries.size(), runningBalance));
 
-                    // Sort by day and add to chart data
-                    List<String> sortedDays = new ArrayList<>(dailyBalances.keySet());
-                    Collections.sort(sortedDays, (a, b) -> Integer.parseInt(a) - Integer.parseInt(b)); // Sort by day (numerical order)
-
-                    for (String day : sortedDays) {
-                        float balance = dailyBalances.get(day);
-                        incomeEntries.add(new Entry(incomeEntries.size(), balance));
-                        dayLabels.add(day);
-                    }
-
-                    updateChart(); // Update the chart after preparing data
+                    // Label: use full date (e.g., "May 5")
+                    Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
+                    String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
+                    dayLabels.add(label);
                 }
-            } else
+
+                if (!allEntries.isEmpty()) {
+                    Map<String, Object> lastEntry = allEntries.get(allEntries.size() - 1);
+                    lastTimestamp = (com.google.firebase.Timestamp) lastEntry.get("timestamp");
+                }
+
+
+                updateChart();
+            } else {
                 Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+            }
         });
     }
+
 
     private void updateChart() {
         LineDataSet dataSet = new LineDataSet(incomeEntries, "Monthly Balance");
@@ -308,145 +282,152 @@ public class DashboardActivity extends AppCompatActivity {
     //Grab income data
     private void storeIncomeData(String userID, float income) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
-
-        // Reference the user's document
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
-        // Fetch existing data or create new if necessary
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                // Document exists: update the incomeEntries
                 List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
-                if (incomeList == null) {
-                    incomeList = new ArrayList<>();
-                }
+                if (incomeList == null) incomeList = new ArrayList<>();
 
-                // Add the new income to the list
                 Map<String, Object> incomeData = new HashMap<>();
                 incomeData.put("amount", income);
                 incomeData.put("timestamp", com.google.firebase.Timestamp.now());
                 incomeList.add(incomeData);
 
-                // Update the incomeEntries in Firestore
                 userDoc.update("incomeEntries", incomeList)
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income updated successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartDataForCurrentMonth(); // ✅ ONLY run this when data is saved
                             } else {
-                                Toast.makeText(DashboardActivity.this, "Failed to update income, please retry", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(DashboardActivity.this, "Failed to update income", Toast.LENGTH_SHORT).show();
                             }
                         });
             } else {
-                // Document does not exist: create new incomeEntries list
+                // First-time setup
                 List<Map<String, Object>> initialIncomeList = new ArrayList<>();
                 Map<String, Object> incomeData = new HashMap<>();
                 incomeData.put("amount", income);
-                incomeData.put("timestamp", com.google.firebase.Timestamp.now()); //Firestore timestamp
+                incomeData.put("timestamp", com.google.firebase.Timestamp.now());
                 initialIncomeList.add(incomeData);
 
                 userDoc.set(Collections.singletonMap("incomeEntries", initialIncomeList))
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income saved successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartDataForCurrentMonth(); // ✅ now safe to refresh
                             } else {
-                                Toast.makeText(DashboardActivity.this, "Failed to save income, please retry", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(DashboardActivity.this, "Failed to save income", Toast.LENGTH_SHORT).show();
                             }
                         });
             }
         });
     }
 
+
     private void storeExpenseData(String userID, String category, float expense) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
-
-        // Reference the user's document
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
-        // Fetch existing data or create new if necessary
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                // Document exists: update the expenseEntries
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
-                if (expenseList == null) {
-                    expenseList = new ArrayList<>();
-                }
+                if (expenseList == null) expenseList = new ArrayList<>();
 
-                // Add the new expense to the list
                 Map<String, Object> expenseData = new HashMap<>();
                 expenseData.put("amount", expense);
                 expenseData.put("category", category);
                 expenseData.put("timestamp", com.google.firebase.Timestamp.now());
                 expenseList.add(expenseData);
 
-                // Update the expenseEntries in Firestore
                 userDoc.update("expenseEntries", expenseList)
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense updated successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartAppend();// ✅ Only after it's saved
                             } else {
-                                Toast.makeText(DashboardActivity.this, "Failed to update expense, please retry", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(DashboardActivity.this, "Failed to update expense", Toast.LENGTH_SHORT).show();
                             }
                         });
             } else {
-                // Document does not exist: create new expenseEntries list
+                // First-time setup
                 List<Map<String, Object>> initialExpenseList = new ArrayList<>();
                 Map<String, Object> expenseData = new HashMap<>();
                 expenseData.put("amount", expense);
                 expenseData.put("category", category);
-                expenseData.put("timestamp", com.google.firebase.Timestamp.now()); //Firestore timestamp
+                expenseData.put("timestamp", com.google.firebase.Timestamp.now());
                 initialExpenseList.add(expenseData);
 
                 userDoc.set(Collections.singletonMap("expenseEntries", initialExpenseList))
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense saved successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartAppend();// ✅ Safe to refresh
                             } else {
-                                Toast.makeText(DashboardActivity.this, "Failed to save expense, please retry", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(DashboardActivity.this, "Failed to save expense", Toast.LENGTH_SHORT).show();
                             }
                         });
             }
         });
     }
 
-    //Load previous session data for user
-    private void fetchPreviousData() {
-        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
-        DocumentReference userDoc = budgetData.collection("Users").document(userID);
+    private void prepareChartAppend() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = db.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                // Retrieve existing income entries
+                List<Map<String, Object>> newEntries = new ArrayList<>();
+
                 List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
+                List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
+
                 if (incomeList != null) {
-                    incomeEntries.clear();
-                    dayLabels.clear();
-
-                    float totalIncome = 0f; // NEW: Track the total income
-
-                    for (int i = 0; i < incomeList.size(); i++) {
-                        Map<String, Object> incomeData = incomeList.get(i);
-                        if (incomeData.containsKey("amount") && incomeData.containsKey("timestamp")) {
-                            float amount = ((Number) incomeData.get("amount")).floatValue();
-                            totalIncome += amount; // NEW: Add to total
-
-                            String dayLabel = new SimpleDateFormat("d", Locale.getDefault())
-                                    .format(((com.google.firebase.Timestamp) incomeData.get("timestamp")).toDate());
-
-                            incomeEntries.add(new Entry(i, amount));
-                            dayLabels.add(dayLabel);
+                    for (Map<String, Object> entry : incomeList) {
+                        com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) entry.get("timestamp");
+                        if (lastTimestamp == null || timestamp.compareTo(lastTimestamp) > 0) {
+                            newEntries.add(entry);
                         }
                     }
-
-                    // ✅ Display the balance
-                    TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
-                    incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", totalIncome));
-
-                    updateChart(); // Update the chart after fetching data
                 }
-            } else {
-                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+
+                if (expenseList != null) {
+                    for (Map<String, Object> entry : expenseList) {
+                        com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) entry.get("timestamp");
+                        if (lastTimestamp == null || timestamp.compareTo(lastTimestamp) > 0) {
+                            entry.put("amount", -((Number) entry.get("amount")).floatValue()); // make it negative
+                            newEntries.add(entry);
+                        }
+                    }
+                }
+
+                // Sort by timestamp
+                newEntries.sort((a, b) -> {
+                    Date da = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
+                    Date dbt = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
+                    return da.compareTo(dbt);
+                });
+
+                float lastY = incomeEntries.isEmpty() ? 0f : incomeEntries.get(incomeEntries.size() - 1).getY();
+
+                for (Map<String, Object> entry : newEntries) {
+                    float amount = ((Number) entry.get("amount")).floatValue();
+                    lastY += amount;
+
+                    incomeEntries.add(new Entry(incomeEntries.size(), lastY));
+
+                    Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
+                    String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
+                    dayLabels.add(label);
+
+                    lastTimestamp = (com.google.firebase.Timestamp) entry.get("timestamp"); // Update last seen
+                }
+
+                updateChart();
             }
         });
     }
+
+    //Load previous session data for user
 
 }
