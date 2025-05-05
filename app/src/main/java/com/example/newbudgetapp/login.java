@@ -35,6 +35,8 @@ public class login extends AppCompatActivity {
         setContentView(R.layout.activity_login_page);
         mAuth = FirebaseAuth.getInstance();
         sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+        String savedEmail = sharedPreferences.getString("email", "");
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.loginPage), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -51,9 +53,8 @@ public class login extends AppCompatActivity {
         final CheckBox rememberMeCheckbox = findViewById(R.id.rememberMeCheckBox);
 
         // Populate credentials if "Remember me" was checked before
-        if (sharedPreferences.contains("email") && sharedPreferences.contains("password")) {
-            email.setText(sharedPreferences.getString("email", ""));
-            password.setText(sharedPreferences.getString("password", ""));
+        if (!savedEmail.isEmpty()) {
+            email.setText(savedEmail);
             rememberMeCheckbox.setChecked(true);
         }
 
@@ -82,10 +83,22 @@ public class login extends AppCompatActivity {
         loginBtn.setOnClickListener(v -> {
             String strEmail = email.getText().toString().trim();
             String strPass = password.getText().toString().trim();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+
+
 
             if (strEmail.isEmpty() || strPass.isEmpty()) {
                 Toast.makeText(login.this, "Please enter email and password", Toast.LENGTH_SHORT).show();
                 return;
+            }
+
+            //Put email if remember is checked
+            if (rememberMeCheckbox.isChecked()) {
+                editor.putString("email", strEmail);
+                editor.apply();
+            } else {
+                editor.remove("email");
+                editor.apply();
             }
 
             mAuth.signInWithEmailAndPassword(strEmail, strPass)
