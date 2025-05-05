@@ -1,4 +1,5 @@
 package com.example.newbudgetapp;
+import androidx.appcompat.app.AlertDialog;
 
 import android.os.Bundle;
 import android.view.View;
@@ -6,6 +7,12 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.content.Intent;
 import android.widget.Toast;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -44,31 +51,50 @@ public class settingsHome extends AppCompatActivity {
             }
         });
 
-        //------------------------------
-        //logic for reset graph button here :)
+        resetGraph.setOnClickListener(v -> {
+            new AlertDialog.Builder(settingsHome.this)
+                    .setTitle("Reset Graph Data")
+                    .setMessage("Are you sure you want to clear all income and expense data?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                        String userID = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : null;
 
+                        if (userID != null) {
+                            FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+                            DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("incomeEntries", new ArrayList<>());
+                            updates.put("expenseEntries", new ArrayList<>());
 
+                            userDoc.update(updates)
+                                    .addOnSuccessListener(aVoid -> Toast.makeText(settingsHome.this, "Graph data reset successfully.", Toast.LENGTH_SHORT).show())
+                                    .addOnFailureListener(e -> Toast.makeText(settingsHome.this, "Failed to reset graph data.", Toast.LENGTH_SHORT).show());
+                        }
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
+        });
 
-
-
-
-
-
-
-        //--------------------------------
 
 
         logOut.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Toast.makeText(settingsHome.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(settingsHome.this)
+                    .setTitle("Sign Out")
+                    .setMessage("Are you sure you want to sign out?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        FirebaseAuth.getInstance().signOut();
+                        Toast.makeText(settingsHome.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
 
-            // Redirect to the login activity
-            Intent intent = new Intent(settingsHome.this, login.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish(); // Finish the current activity
+                        Intent intent = new Intent(settingsHome.this, login.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
         });
+
 
     }
 }
