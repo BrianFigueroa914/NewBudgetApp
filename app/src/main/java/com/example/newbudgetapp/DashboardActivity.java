@@ -8,21 +8,17 @@ import java.util.Random;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.example.newbudgetapp.AddExpenseActivity;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -34,7 +30,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -43,12 +38,11 @@ import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity {
 
-    private boolean isIncomeMode = true;
     private LineChart lineChart;
     private List<Entry> incomeEntries = new ArrayList<>();
     private List<String> dayLabels = new ArrayList<>();
-    private String[] categories = {"Rent", "Groceries", "Utilities", "Going Out", "Transportation", "Entertainment", "Other"};
     private String userID;
+    private FirebaseAuth mAuth;
     private com.google.firebase.Timestamp lastTimestamp = null;
     private void addGoalLineToChart(float goalAmount) {
         LimitLine goalLine = new LimitLine(goalAmount, "Goal: $" + (int) goalAmount);
@@ -70,10 +64,6 @@ public class DashboardActivity extends AppCompatActivity {
         return Color.rgb(red, green, blue);
     }
 
-
-    private FirebaseAuth mAuth;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,9 +72,6 @@ public class DashboardActivity extends AppCompatActivity {
         // Variables
         TextView usernameText = findViewById(R.id.usernameText);
         lineChart = findViewById(R.id.lineChart);
-        EditText textHintInput = findViewById(R.id.monetaryInput);
-        Button addDataBtn = findViewById(R.id.addDataBtn);
-        Spinner expenseCategorySpinner = findViewById(R.id.expenseCategorySpinner);
         TextView monthLabel = findViewById(R.id.monthLabel);
         CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
         CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
@@ -107,9 +94,7 @@ public class DashboardActivity extends AppCompatActivity {
                     }
                 }
             });
-
-            // Initial load of chart data
-            prepareChartDataForCurrentMonth();  // This sets up the chart and lastTimestamp
+            prepareChartDataForCurrentMonth();
         } else {
             finish(); // No user logged in
         }
@@ -118,58 +103,14 @@ public class DashboardActivity extends AppCompatActivity {
         String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
         monthLabel.setText(currentMonth + " Summary");
 
-        // Handle input
-        addDataBtn.setOnClickListener(v -> {
-            String inputAmount = textHintInput.getText().toString().trim();
-
-            if (inputAmount.isEmpty()) {
-                Toast.makeText(DashboardActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            try {
-                float amount = Float.parseFloat(inputAmount);
-                if (Float.isNaN(amount) || Float.isInfinite(amount)) throw new NumberFormatException();
-
-                if (isIncomeMode) {
-                    storeIncomeData(userID, amount);  // This now calls prepareChartAppend()
-                } else {
-                    String selectedCategory = expenseCategorySpinner.getSelectedItem().toString();
-                    storeExpenseData(userID, selectedCategory, amount);  // Also calls prepareChartAppend()
-                }
-
-                textHintInput.setText("");  // Clear input
-
-            } catch (NumberFormatException e) {
-                Toast.makeText(DashboardActivity.this, "Invalid number. Please enter a valid amount.", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Set up category spinner
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        expenseCategorySpinner.setAdapter(adapter);
-
-        expenseCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {}
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        // Mode toggle buttons
         incomeCardBtn.setOnClickListener(v -> {
             Intent intent = new Intent(DashboardActivity.this, IncomeActivity.class);
             startActivity(intent);
         });
 
-
         expenseCardBtn.setOnClickListener(v -> {
-            isIncomeMode = false;
-            textHintInput.setHint("Enter expense");
-            addDataBtn.setText("Add Expense");
-            expenseCategorySpinner.setVisibility(View.VISIBLE);
+            Intent intent = new Intent(DashboardActivity.this, AddExpenseActivity.class);
+            startActivityForResult(intent, 1001);
         });
 
         // Navigation buttons
@@ -201,9 +142,11 @@ public class DashboardActivity extends AppCompatActivity {
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
                 List<Map<String, Object>> allEntries = new ArrayList<>();
+
                 if (incomeList != null) allEntries.addAll(incomeList);
                 if (expenseList != null) allEntries.addAll(expenseList);
 
+                // Sort all entries by timestamp
                 allEntries.sort((a, b) -> {
                     Date dateA = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
                     Date dateB = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
@@ -211,16 +154,18 @@ public class DashboardActivity extends AppCompatActivity {
                 });
 
                 float runningBalance = 0f;
+
                 for (Map<String, Object> entry : allEntries) {
                     float amount = ((Number) entry.get("amount")).floatValue();
+
+                    // Check if it's an expense
                     if (entry.containsKey("category")) {
-                        String category = (String) entry.get("category");
-                        if (!category.toLowerCase(Locale.ROOT).contains("income")) {
-                            amount = -amount;
-                        }
+                        amount = -amount;
                     }
+
                     runningBalance += amount;
                     incomeEntries.add(new Entry(incomeEntries.size(), runningBalance));
+
                     Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
                     String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
                     dayLabels.add(label);
