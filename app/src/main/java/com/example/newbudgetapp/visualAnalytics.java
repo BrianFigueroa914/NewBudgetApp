@@ -37,7 +37,7 @@ public class visualAnalytics extends AppCompatActivity {
             return insets;
         });
 
-        //Get references to all views
+        // Get references to all views
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         PieChart pieChart = findViewById(R.id.pieChart);
@@ -45,7 +45,7 @@ public class visualAnalytics extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             userID = user.getUid();
-            fetchExpenseData(); //Fetch and display existing data
+            fetchExpenseData(); // Fetch and display existing data
         }
         else
             finish(); // Redirect to login

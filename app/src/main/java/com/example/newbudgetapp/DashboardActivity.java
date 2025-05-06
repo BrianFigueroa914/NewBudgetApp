@@ -1,6 +1,6 @@
 package com.example.newbudgetapp;
-import com.example.newbudgetapp.AchievementsActivity;
 
+import com.example.newbudgetapp.AchievementsActivity;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -47,6 +47,7 @@ public class DashboardActivity extends AppCompatActivity {
     private String[] categories = {"Rent", "Groceries", "Utilities", "Going Out", "Transportation", "Entertainment", "Other"};
     private String userID;
     private com.google.firebase.Timestamp lastTimestamp = null;
+    private FirebaseAuth mAuth;
 
 
     @Override
@@ -54,28 +55,26 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dashboard_activity);
 
-        TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
+        // Variables
         TextView usernameText = findViewById(R.id.usernameText);
         lineChart = findViewById(R.id.lineChart);
         EditText textHintInput = findViewById(R.id.monetaryInput);
         Button addDataBtn = findViewById(R.id.addDataBtn);
         Spinner expenseCategorySpinner = findViewById(R.id.expenseCategorySpinner);
         TextView monthLabel = findViewById(R.id.monthLabel);
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-
         CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
         CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
         CardView savingsBtn = findViewById(R.id.savingsCardBtn);
         CardView visualsBtn = findViewById(R.id.visualsCardBtn);
         CardView achievementsCardBtn = findViewById(R.id.achievementsCardBtn);
         CardView settingsCardBtn = findViewById(R.id.settingsCardBtn);
-
+        mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
+
         if (user != null) {
             userID = user.getUid();
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            DocumentReference userDoc = db.collection("Users").document(userID);
+            FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+            DocumentReference userDoc = budgetData.collection("Users").document(userID);
             userDoc.get().addOnSuccessListener(documentSnapshot -> {
                 if (documentSnapshot.exists()) {
                     String username = documentSnapshot.getString("username");
@@ -85,7 +84,7 @@ public class DashboardActivity extends AppCompatActivity {
                 }
             });
 
-            // ✅ INITIAL LOAD OF CHART DATA
+            // Initial load of chart data
             prepareChartDataForCurrentMonth();  // This sets up the chart and lastTimestamp
         } else {
             finish(); // No user logged in
@@ -129,9 +128,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         expenseCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Optional: do something with selectedCategory
-            }
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {}
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
@@ -159,8 +156,7 @@ public class DashboardActivity extends AppCompatActivity {
         settingsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, settingsHome.class)));
     }
 
-
-    //Methods
+    // Methods
     private void prepareChartDataForCurrentMonth() {
         incomeEntries.clear();
         dayLabels.clear();
@@ -219,7 +215,6 @@ public class DashboardActivity extends AppCompatActivity {
         });
     }
 
-
     private void updateChart() {
         LineDataSet dataSet = new LineDataSet(incomeEntries, "Monthly Balance");
         dataSet.setColor(Color.GREEN);
@@ -228,19 +223,19 @@ public class DashboardActivity extends AppCompatActivity {
         dataSet.setCircleRadius(4f);
         dataSet.setValueTextSize(12f);
         dataSet.setDrawValues(true);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Optional: smoother curve
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Smoother curve
 
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
 
-        // ✅ Update the visible balance based on the last data point
+        // Update the visible balance based on the last data point
         if (!incomeEntries.isEmpty()) {
             float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
             TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
             incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
         }
 
-        // 📊 Chart appearance settings
+        // Chart appearance settings
         lineChart.getAxisLeft().removeAllLimitLines();
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(true);
@@ -279,7 +274,7 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    //Grab income data
+    // Grab income data
     private void storeIncomeData(String userID, float income) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
@@ -298,7 +293,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income updated successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartDataForCurrentMonth(); // ✅ ONLY run this when data is saved
+                                prepareChartDataForCurrentMonth(); // ONLY run this when data is saved
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to update income", Toast.LENGTH_SHORT).show();
                             }
@@ -315,7 +310,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income saved successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartDataForCurrentMonth(); // ✅ now safe to refresh
+                                prepareChartDataForCurrentMonth(); //  Now safe to refresh
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to save income", Toast.LENGTH_SHORT).show();
                             }
@@ -323,7 +318,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private void storeExpenseData(String userID, String category, float expense) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
@@ -344,7 +338,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense updated successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartAppend();// ✅ Only after it's saved
+                                prepareChartAppend();//  Only after it's saved
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to update expense", Toast.LENGTH_SHORT).show();
                             }
@@ -362,7 +356,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense saved successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartAppend();// ✅ Safe to refresh
+                                prepareChartAppend();//  Safe to refresh
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to save expense", Toast.LENGTH_SHORT).show();
                             }
@@ -372,8 +366,8 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void prepareChartAppend() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference userDoc = db.collection("Users").document(userID);
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
@@ -422,12 +416,8 @@ public class DashboardActivity extends AppCompatActivity {
 
                     lastTimestamp = (com.google.firebase.Timestamp) entry.get("timestamp"); // Update last seen
                 }
-
                 updateChart();
             }
         });
     }
-
-    //Load previous session data for user
-
 }

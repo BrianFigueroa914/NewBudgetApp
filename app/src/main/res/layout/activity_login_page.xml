@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/loginPage"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,7 +12,7 @@
         android:id="@+id/titleName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Green Needle Budget"
+        android:text="@string/green_needle_budget"
         android:textAlignment="center"
         android:textColor="@color/taupe"
         android:textSize="36sp"
@@ -42,7 +41,7 @@
                 android:background="@drawable/custom_edit_text"
                 android:drawableStart="@drawable/baseline_alternate_email_24"
                 android:drawablePadding="10dp"
-                android:hint="Email"
+                android:hint="@string/email"
                 android:inputType="textEmailAddress"
                 android:padding="10dp"
                 android:textColor="@color/black"
@@ -60,7 +59,7 @@
                     android:background="@drawable/custom_edit_text"
                     android:drawableStart="@drawable/lock_icon"
                     android:drawablePadding="10dp"
-                    android:hint="Password"
+                    android:hint="@string/password"
                     android:inputType="textPassword"
                     android:padding="10dp"
                     android:textColor="@color/black"
@@ -87,7 +86,7 @@
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:alpha="0.7"
-                    android:text="Remember me" />
+                    android:text="@string/remember_me" />
 
                 <TextView
                     android:id="@+id/forgotPassword"
@@ -95,7 +94,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:text="Forgot password?" />
+                    android:text="@string/forgot_password" />
             </RelativeLayout>
 
             <androidx.appcompat.widget.AppCompatButton
@@ -105,7 +104,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:background="@color/jade"
-                android:text="Log In"
+                android:text="@string/log_in"
                 android:textAllCaps="false"
                 android:textColor="@color/white" />
 
@@ -114,12 +113,8 @@
                 android:layout_height="match_parent"
                 android:layout_width="match_parent"
                 android:layout_marginTop="20dp"
-                android:text="Need an account? Create one here"
+                android:text="@string/need_an_account_create_one_here"
                 android:textAlignment="center"/>
-
         </LinearLayout>
-
-
     </androidx.cardview.widget.CardView>
-
 </LinearLayout>

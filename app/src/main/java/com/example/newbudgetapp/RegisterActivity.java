@@ -1,11 +1,9 @@
 package com.example.newbudgetapp;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -22,39 +20,32 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.Firebase;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class register extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
     //global variables
     private boolean passwordShowing = false;
     private boolean confirmPasswordShowing = false;
     public static int MIN_PASSWORD_CHARS = 8; //8 chars
     private String userID;
-    FirebaseAuth mAuth;
-    FirebaseFirestore budgetData;
-
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore budgetData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_register);
-        mAuth = FirebaseAuth.getInstance();
-        budgetData = FirebaseFirestore.getInstance();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.registrationPage), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        //variables
+        // Variables
         final EditText username = findViewById(R.id.username);
         final EditText email = findViewById(R.id.email);
         final EditText password = findViewById(R.id.password);
@@ -63,9 +54,10 @@ public class register extends AppCompatActivity {
         final ImageView secondShowPassword = findViewById(R.id.secondShowPasswordIcon);
         final AppCompatButton signUpBtn = findViewById(R.id.signUpBtn);
         final TextView acctSignIn = findViewById(R.id.acctSignInBtn);
+        mAuth = FirebaseAuth.getInstance();
+        budgetData = FirebaseFirestore.getInstance();
 
-        //methods
-        //show or hide password methods
+        // Show or hide password methods
         showPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -80,6 +72,7 @@ public class register extends AppCompatActivity {
                 }
             }
         });
+
         secondShowPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -96,7 +89,7 @@ public class register extends AppCompatActivity {
             }
         });
 
-        //Create an account button
+        // Create an account button
         signUpBtn.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("SetTextI18n")
             @Override
@@ -108,18 +101,18 @@ public class register extends AppCompatActivity {
                 String strPassword =  String.valueOf(password.getText());
                 String strConfirmPassword =  String.valueOf(confirmPassword.getText());
 
-                //input validation
+                // Input validation
                 if (TextUtils.isEmpty(strEmail)) {
-                    Toast.makeText(register.this, "Please enter email", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Please enter email", Toast.LENGTH_SHORT).show();
                 }
                 else if (TextUtils.isEmpty(strPassword)) {
-                    Toast.makeText(register.this, "Please enter password", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Please enter password", Toast.LENGTH_SHORT).show();
                 }
                 else if (strPassword.length() < MIN_PASSWORD_CHARS) {
-                    Toast.makeText(register.this, "Password must be at least " + MIN_PASSWORD_CHARS + " characters long", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Password must be at least " + MIN_PASSWORD_CHARS + " characters long", Toast.LENGTH_SHORT).show();
                 }
                 else if (!strPassword.equals(strConfirmPassword)) {
-                    Toast.makeText(register.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     // Proceed with Firebase registration
@@ -132,7 +125,7 @@ public class register extends AppCompatActivity {
                                         if (user != null) {
                                             userID = user.getUid(); //Get UID for registered user
 
-                                            //Create User object
+                                            // Create User object
                                             User userData = new User(strUsername, strEmail, null);
 
                                             // Add data to Firestore
@@ -142,10 +135,10 @@ public class register extends AppCompatActivity {
                                                         @Override
                                                         public void onComplete(@NonNull Task<Void> task) {
                                                             if (task.isSuccessful()) {
-                                                                Toast.makeText(register.this, "Account successfully created", Toast.LENGTH_SHORT).show();
+                                                                Toast.makeText(RegisterActivity.this, "Account successfully created", Toast.LENGTH_SHORT).show();
                                                                 finish();
                                                             } else {
-                                                                Toast.makeText(register.this, "Failed to save user data", Toast.LENGTH_SHORT).show();
+                                                                Toast.makeText(RegisterActivity.this, "Failed to save user data", Toast.LENGTH_SHORT).show();
                                                             }
                                                         }
                                                     });
@@ -153,7 +146,7 @@ public class register extends AppCompatActivity {
                                     }
                                     else {
                                         // If sign in fails, display a message to the user.
-                                        Toast.makeText(register.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(RegisterActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             });
@@ -161,11 +154,11 @@ public class register extends AppCompatActivity {
             }
         });
 
-        //Return to login page method
+        // Return to login page method
         acctSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //sends you back to the activity that launched this activity (login_page)
+                // Sends you back to the activity that launched this activity (login_page)
                 finish();
             }
         });
