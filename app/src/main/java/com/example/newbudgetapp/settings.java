@@ -29,7 +29,7 @@ import java.util.Calendar;
 
 public class settings extends AppCompatActivity {
 
-    //nested broadcast receiver class
+    // Nested broadcast receiver class
     public static class settingsReceive extends BroadcastReceiver {
         int billNotificationID = 1;
         String billChannelID = "scheduled_notification_channel";
@@ -85,7 +85,7 @@ public class settings extends AppCompatActivity {
         TimePicker timePicker = findViewById(R.id.timePicker);
         DatePicker datePicker = findViewById(R.id.datePicker);
 
-        //button to set reminder
+        // Button to set reminder
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,7 +101,7 @@ public class settings extends AppCompatActivity {
             }
         });
 
-        //button to go back to settings home page
+        // Button to go back to settings home page
         settingsBackBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

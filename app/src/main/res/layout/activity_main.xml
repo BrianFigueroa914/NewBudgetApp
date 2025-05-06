@@ -14,7 +14,7 @@
         android:id="@+id/welcomeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome"
+        android:text="@string/welcome"
         android:textAlignment="center"
         android:textColor="@color/taupe"
         android:textSize="36sp"
@@ -28,8 +28,8 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:background="@color/jade"
-        android:text="Log In"
-        android:textSize="25dp"
+        android:text="@string/log_in"
+        android:textSize="25sp"
         android:textAllCaps="false"
         android:textColor="@color/black"/>
 </LinearLayout>

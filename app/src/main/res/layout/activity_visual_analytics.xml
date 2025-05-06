@@ -119,8 +119,5 @@
             android:layout_height="300dp"/>
 
     </LinearLayout>
-
-
-
 </ScrollView>
 

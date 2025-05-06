@@ -41,7 +41,7 @@
             android:enabled="true" />
 
         <activity
-            android:name=".register"
+            android:name=".RegisterActivity"
             android:exported="false" />
         <activity
             android:name=".login"

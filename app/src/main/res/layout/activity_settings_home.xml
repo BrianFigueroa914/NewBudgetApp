@@ -27,7 +27,6 @@
             android:text="@string/settings"
             android:textSize="20sp"
             android:textStyle="bold" />
-
     </RelativeLayout>
 
     <RelativeLayout
@@ -42,17 +41,14 @@
             android:layout_centerVertical="true"
             android:layout_marginStart="350dp"
             android:background="@color/transparent"
-            android:src="@drawable/round_arrow_forward_24">
-        </ImageButton>
+            android:src="@drawable/round_arrow_forward_24"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/bill_reminders"
             android:textSize="15sp"
-            android:padding="14dp">
-        </TextView>
-
+            android:padding="14dp"/>
     </RelativeLayout>
 
     <RelativeLayout
@@ -64,9 +60,7 @@
             android:layout_height="wrap_content"
             android:text="@string/schedule_updates"
             android:textSize="15sp"
-            android:padding="14dp">
-
-        </TextView>
+            android:padding="14dp"/>
 
         <ImageButton
             android:id="@+id/scheduleUpdatesBtn"
@@ -75,8 +69,7 @@
             android:layout_centerVertical="true"
             android:layout_marginStart="350dp"
             android:background="@color/transparent"
-            android:src="@drawable/round_arrow_forward_24">
-        </ImageButton>
+            android:src="@drawable/round_arrow_forward_24"/>
 
     </RelativeLayout>
 
@@ -85,19 +78,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/black"
-        android:text="Reset Graph"
+        android:text="@string/reset_graph"
         android:background="@drawable/square_button"
         app:backgroundTint="@null"/>
 
     <Button
         android:id="@+id/signOutBtn"
         android:layout_gravity="center"
-        android:text="Sign Out"
+        android:text="@string/sign_out"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:textColor="@color/black"
         android:background="@drawable/square_button"
         app:backgroundTint="@null"/>
-
 </LinearLayout>

@@ -24,5 +24,26 @@
     <string name="expense_categories">Expense Categories</string>
     <string name="food">Food</string>
     <string name="groceries">Groceries</string>
+    <string name="log_in">Log In</string>
+    <string name="green_needle_budget">Green Needle Budget</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="need_an_account_create_one_here">Need an account? Create one here</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="username">Username</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="goal_name">Goal name</string>
+    <string name="enter_goal_amount">Enter goal amount</string>
+    <string name="select_deadline">Select Deadline</string>
+    <string name="deadline_not_set">Deadline: Not Set</string>
+    <string name="goal_not_set">Goal: Not Set</string>
+    <string name="update_goal">Update Goal</string>
+    <string name="reset_graph">Reset Graph</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="name">Name</string>
+    <string name="stats">Stats</string>
 
 </resources>

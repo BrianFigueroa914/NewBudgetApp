@@ -34,7 +34,7 @@ public class SavingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_savings);
 
-        //Step 1: Get references to all views
+        // Variables
         goalTargetName = findViewById(R.id.goalTargetName);
         savingsTargetInput = findViewById(R.id.savingsTargetInput);
         deadlineDate = findViewById(R.id.deadlineDate);
@@ -45,20 +45,20 @@ public class SavingsActivity extends AppCompatActivity {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
 
-        //Get logged-in user's UID
+        // Get logged-in user's UID
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null)
             userID = user.getUid();
         else
             finish(); // Redirect to login
 
-        //Load existing savings goal
+        // Load existing savings goal
         loadSavingsGoal();
 
-        //Select deadline button logic
+        // Select deadline button logic
         selectDeadlineBtn.setOnClickListener(v -> showDatePicker());
 
-        //Update savings goal button logic
+        // Update savings goal button logic
         updateGoalBtn.setOnClickListener(v -> updateSavingsGoal());
     }
 
@@ -75,9 +75,9 @@ public class SavingsActivity extends AppCompatActivity {
     private void updateSavingsGoal() {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance(); // Ensure correct Firestore reference
         DocumentReference userDoc = budgetData.collection("Users").document(userID); // Reference user doc
-
         String targetAmountText = savingsTargetInput.getText().toString().trim();
         String targetNameText = goalTargetName.getText().toString().trim();
+
         if (targetAmountText.isEmpty() || selectedDate == null || targetNameText.isEmpty()) {
             Toast.makeText(this, "Please enter a goal name, valid savings amount and select a deadline.", Toast.LENGTH_SHORT).show();
             return;
@@ -137,5 +137,4 @@ public class SavingsActivity extends AppCompatActivity {
             }
         });
     }
-
 }
