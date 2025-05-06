@@ -24,7 +24,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Goal Name"
+                android:text="@string/goal_name"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -33,7 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@android:drawable/ic_menu_more"
-                android:contentDescription="Options"
+                android:contentDescription="@string/options"
                 android:padding="8dp" />
         </LinearLayout>
 
@@ -41,26 +41,27 @@
             android:id="@+id/itemDeadline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Deadline"
+            android:text="@string/deadline"
             android:textSize="14sp" />
 
         <TextView
             android:id="@+id/itemTargetAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Target"
+            android:text="@string/target"
             android:textSize="14sp" />
 
         <TextView
             android:id="@+id/itemRemainingAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Remaining"
+            android:text="@string/remaining"
             android:textSize="14sp" />
 
         <ProgressBar
             android:id="@+id/itemProgressBar"
             style="?android:attr/progressBarStyleHorizontal"
+            android:progressDrawable="@drawable/progress_bar_style"
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:max="100"

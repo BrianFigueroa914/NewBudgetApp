@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:contentDescription="Options"
+            android:contentDescription="@string/options"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_more" />
 
@@ -27,7 +27,7 @@
             android:id="@+id/itemCategoryName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Category"
+            android:text="@string/category"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -35,7 +35,7 @@
             android:id="@+id/itemLimit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Limit"
+            android:text="@string/limit"
             android:textSize="14sp" />
 
         <TextView
@@ -43,12 +43,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Spent"
+            android:text="@string/spent"
             android:textSize="14sp" />
 
         <ProgressBar
             android:id="@+id/budgetProgress"
             style="?android:attr/progressBarStyleHorizontal"
+            android:progressDrawable="@drawable/progress_bar_style"
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:layout_marginTop="8dp"
