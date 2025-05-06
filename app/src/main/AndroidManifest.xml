@@ -15,34 +15,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NewBudgetApp"
         tools:targetApi="31">
-        <activity
-            android:name=".SavingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".visualAnalytics"
-            android:exported="false" />
-        <activity
-            android:name=".settingsHome"
-            android:exported="false" />
-        <activity
-            android:name=".settings"
-            android:exported="false" />
+
+        <activity android:name=".IncomeActivity" android:exported="false" />
+        <activity android:name=".SavingsActivity" android:exported="false" />
+        <activity android:name=".visualAnalytics" android:exported="false" />
+        <activity android:name=".settingsHome" android:exported="false" />
+        <activity android:name=".settings" android:exported="false" />
 
         <receiver
             android:name=".settings$settingsReceive"
             android:enabled="true" />
 
-        <activity
-            android:name=".settings2"
-            android:exported="false" />
+        <activity android:name=".settings2" android:exported="false" />
 
         <receiver
             android:name=".settings2$settings2Receive"
             android:enabled="true" />
 
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
+        <activity android:name=".RegisterActivity" android:exported="false" />
         <activity
             android:name=".login"
             android:exported="true"
@@ -54,14 +44,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".DashboardActivity" />
-        <activity
-            android:name=".LeaderboardActivity"
-            android:exported="false">
-
-        </activity>
-        <activity
-            android:name=".AchievementsActivity"
-            android:exported="false" />
+        <activity android:name=".LeaderboardActivity" android:exported="false" />
+        <activity android:name=".AchievementsActivity" android:exported="false" />
     </application>
 
 </manifest>

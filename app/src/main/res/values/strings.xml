@@ -45,5 +45,8 @@
     <string name="sign_out">Sign Out</string>
     <string name="name">Name</string>
     <string name="stats">Stats</string>
+    <string name="menu_add_to_savings">Add to Savings</string>
+    <string name="menu_delete_goal">Delete Goal</string>
+
 
 </resources>

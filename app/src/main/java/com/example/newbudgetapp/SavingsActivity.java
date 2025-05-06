@@ -1,65 +1,89 @@
+
+
 package com.example.newbudgetapp;
 
 import android.app.DatePickerDialog;
 import android.icu.util.Calendar;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class SavingsActivity extends AppCompatActivity {
-    private EditText goalTargetName, savingsTargetInput;
-    private TextView deadlineDate, goalName;
-    private ProgressBar savingsProgress;
-    private Button selectDeadlineBtn, updateGoalBtn;
-    private String userID;
+    private EditText goalTargetName, savingsTargetInput, budgetLimitInput;
+    private Spinner budgetCategorySpinner;
+    private TextView deadlineDate;
+    private Button selectDeadlineBtn, updateGoalBtn, addBudgetBtn;
+    private RecyclerView goalsRecyclerView, budgetsRecyclerView;
+
     private Calendar selectedDate;
+    private String userID;
+    private FirebaseFirestore db;
+    private List<SavingsGoal> savingsGoals;
+    private List<BudgetCategory> budgetCategories;
+    private SavingsGoalAdapter goalAdapter;
+    private BudgetAdapter budgetAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_savings);
 
-        // Variables
+
         goalTargetName = findViewById(R.id.goalTargetName);
         savingsTargetInput = findViewById(R.id.savingsTargetInput);
+        budgetLimitInput = findViewById(R.id.budgetLimitInput);
+        budgetCategorySpinner = findViewById(R.id.budgetCategorySpinner);
         deadlineDate = findViewById(R.id.deadlineDate);
-        goalName = findViewById(R.id.goalName);
-        savingsProgress = findViewById(R.id.savingsProgress);
         selectDeadlineBtn = findViewById(R.id.selectDeadlineBtn);
         updateGoalBtn = findViewById(R.id.updateGoalBtn);
+        addBudgetBtn = findViewById(R.id.addBudgetBtn);
+        goalsRecyclerView = findViewById(R.id.goalsRecyclerView);
+        budgetsRecyclerView = findViewById(R.id.budgetsRecyclerView);
+
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
-
-        // Get logged-in user's UID
+        db = FirebaseFirestore.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null)
+
+        if (user != null) {
             userID = user.getUid();
-        else
-            finish(); // Redirect to login
+        } else {
+            finish(); return;
+        }
 
-        // Load existing savings goal
-        loadSavingsGoal();
+        savingsGoals = new ArrayList<>();
+        goalAdapter = new SavingsGoalAdapter(savingsGoals, userID);
+        goalsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        goalsRecyclerView.setAdapter(goalAdapter);
 
-        // Select deadline button logic
+        budgetCategories = new ArrayList<>();
+        budgetsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+
+        String[] categories = {"Rent", "Groceries", "Utilities", "Transportation", "Going Out", "Entertainment", "Other"};
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        budgetCategorySpinner.setAdapter(categoryAdapter);
+
+        loadSavingsGoals();
+        loadBudgets();
+
         selectDeadlineBtn.setOnClickListener(v -> showDatePicker());
-
-        // Update savings goal button logic
-        updateGoalBtn.setOnClickListener(v -> updateSavingsGoal());
+        updateGoalBtn.setOnClickListener(v -> addNewGoal());
+        addBudgetBtn.setOnClickListener(v -> addNewBudget());
     }
 
     private void showDatePicker() {
@@ -72,69 +96,112 @@ public class SavingsActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    private void updateSavingsGoal() {
-        FirebaseFirestore budgetData = FirebaseFirestore.getInstance(); // Ensure correct Firestore reference
-        DocumentReference userDoc = budgetData.collection("Users").document(userID); // Reference user doc
-        String targetAmountText = savingsTargetInput.getText().toString().trim();
+    private void addNewGoal() {
         String targetNameText = goalTargetName.getText().toString().trim();
+        String targetAmountText = savingsTargetInput.getText().toString().trim();
 
-        if (targetAmountText.isEmpty() || selectedDate == null || targetNameText.isEmpty()) {
+        if (TextUtils.isEmpty(targetAmountText) || selectedDate == null || TextUtils.isEmpty(targetNameText)) {
             Toast.makeText(this, "Please enter a goal name, valid savings amount and select a deadline.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         float targetAmount = Float.parseFloat(targetAmountText);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        String deadline = dateFormat.format(selectedDate.getTime());
+        String deadline = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(selectedDate.getTime());
 
-        //Prepare savings goal data
-        Map<String, Object> savingsGoal = new HashMap<>();
-        savingsGoal.put("goalName", targetNameText);
-        savingsGoal.put("goalAmount", targetAmount);
-        savingsGoal.put("deadline", deadline);
+        SavingsGoal newGoal = new SavingsGoal(targetNameText, targetAmount, deadline, 0);
+        DocumentReference userDoc = db.collection("Users").document(userID);
 
-        //Store savings goal in Firestore under user document
-        userDoc.update("savingsGoal", savingsGoal)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, "Savings goal updated successfully!", Toast.LENGTH_SHORT).show();
-                        savingsProgress.setProgress(0); // Reset progress
-                    } else {
-                        Toast.makeText(this, "Failed to update savings goal.", Toast.LENGTH_SHORT).show();
+        userDoc.update("savingsGoals", FieldValue.arrayUnion(newGoal))
+                .addOnSuccessListener(aVoid -> {
+                    savingsGoals.add(newGoal);
+                    goalAdapter.notifyDataSetChanged();
+                    goalTargetName.setText("");
+                    savingsTargetInput.setText("");
+                    deadlineDate.setText("Deadline: Not Set");
+
+
+                    Map<String, Object> expenseEntry = new HashMap<>();
+                    expenseEntry.put("amount", 0f);
+                    expenseEntry.put("category", "Saved to Goal: " + targetNameText);
+                    expenseEntry.put("timestamp", com.google.firebase.Timestamp.now());
+
+                    userDoc.get().addOnSuccessListener(doc -> {
+                        List<Map<String, Object>> expenseList = (List<Map<String, Object>>) doc.get("expenseEntries");
+                        if (expenseList == null) expenseList = new ArrayList<>();
+                        expenseList.add(expenseEntry);
+                        userDoc.update("expenseEntries", expenseList);
+                    });
+                });
+    }
+
+
+    private void addNewBudget() {
+        String category = budgetCategorySpinner.getSelectedItem().toString();
+        String limitStr = budgetLimitInput.getText().toString().trim();
+
+        if (TextUtils.isEmpty(category) || TextUtils.isEmpty(limitStr)) {
+            Toast.makeText(this, "Enter category and limit", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        float limit = Float.parseFloat(limitStr);
+        BudgetCategory budget = new BudgetCategory(category, limit);
+
+        db.collection("Users").document(userID)
+                .update("budgets", FieldValue.arrayUnion(budget))
+                .addOnSuccessListener(aVoid -> {
+                    budgetCategories.add(budget);
+                    loadBudgets();
+                    budgetLimitInput.setText("");
+                });
+    }
+
+    private void loadSavingsGoals() {
+        db.collection("Users").document(userID).get()
+                .addOnSuccessListener(doc -> {
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) doc.get("savingsGoals");
+                    if (list != null) {
+                        for (Map<String, Object> m : list) {
+                            String n = (String) m.get("goalName");
+                            float a = ((Number) m.get("goalAmount")).floatValue();
+                            String d = (String) m.get("deadline");
+                            float c = m.containsKey("currentAmount") ? ((Number) m.get("currentAmount")).floatValue() : 0;
+                            savingsGoals.add(new SavingsGoal(n, a, d, c));
+                        }
+                        goalAdapter.notifyDataSetChanged();
                     }
                 });
     }
 
-    private void loadSavingsGoal() {
-        FirebaseFirestore budgetData = FirebaseFirestore.getInstance(); // Initialize Firestore
-        DocumentReference userDoc = budgetData.collection("Users").document(userID); // Reference user document
+    private void loadBudgets() {
+        db.collection("Users").document(userID).get()
+                .addOnSuccessListener(doc -> {
+                    List<Map<String, Object>> budgetList = (List<Map<String, Object>>) doc.get("budgets");
+                    List<Map<String, Object>> expenseList = (List<Map<String, Object>>) doc.get("expenseEntries");
 
-        userDoc.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                // Retrieve savings goal data
-                Map<String, Object> savingsGoal = (Map<String, Object>) task.getResult().get("savingsGoal");
+                    Map<String, Float> spendingMap = new HashMap<>();
+                    if (expenseList != null) {
+                        for (Map<String, Object> expense : expenseList) {
+                            if (expense.containsKey("category")) {
+                                String category = (String) expense.get("category");
+                                float amount = ((Number) expense.get("amount")).floatValue();
+                                spendingMap.put(category, spendingMap.getOrDefault(category, 0f) + amount);
+                            }
+                        }
+                    }
 
-                if (savingsGoal != null) {
-                    // Safely extract values with validation
-                    float goalAmount = savingsGoal.containsKey("goalAmount") ?
-                            ((Number) savingsGoal.get("goalAmount")).floatValue() : 0;
+                    budgetCategories.clear();
+                    if (budgetList != null) {
+                        for (Map<String, Object> m : budgetList) {
+                            String c = (String) m.get("category");
+                            float l = ((Number) m.get("limit")).floatValue();
+                            budgetCategories.add(new BudgetCategory(c, l));
+                        }
+                    }
 
-                    String deadline = savingsGoal.containsKey("deadline") ?
-                            (String) savingsGoal.get("deadline") : "Not Set";
-
-                    String goal = savingsGoal.containsKey("goalName") ?
-                            (String) savingsGoal.get("goalName") : "Not Set";
-
-                    // Update UI components
-                    savingsTargetInput.setText(String.valueOf(goalAmount));
-                    deadlineDate.setText("Deadline: " + deadline);
-                    goalName.setText(goal);
-                } else {
-                    Toast.makeText(SavingsActivity.this, "No savings goal set yet.", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(SavingsActivity.this, "Failed to load savings goal.", Toast.LENGTH_SHORT).show();
-            }
-        });
+                    budgetAdapter = new BudgetAdapter(budgetCategories, spendingMap, userID);
+                    budgetsRecyclerView.setAdapter(budgetAdapter);
+                    budgetAdapter.notifyDataSetChanged();
+                });
     }
 }

@@ -151,11 +151,10 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Mode toggle buttons
         incomeCardBtn.setOnClickListener(v -> {
-            isIncomeMode = true;
-            textHintInput.setHint("Enter income");
-            addDataBtn.setText("Add Income");
-            expenseCategorySpinner.setVisibility(View.GONE);
+            Intent intent = new Intent(DashboardActivity.this, IncomeActivity.class);
+            startActivity(intent);
         });
+
 
         expenseCardBtn.setOnClickListener(v -> {
             isIncomeMode = false;
@@ -204,14 +203,18 @@ public class DashboardActivity extends AppCompatActivity {
 
                     // Check if it's an expense
                     if (entry.containsKey("category")) {
-                        amount = -amount;
+                        String category = (String) entry.get("category");
+                        if (!category.toLowerCase(Locale.ROOT).contains("income")) {
+                            amount = -amount;
+                        }
                     }
+
 
                     runningBalance += amount;
 
                     incomeEntries.add(new Entry(incomeEntries.size(), runningBalance));
 
-                    // Label: use full date (e.g., "May 5")
+
                     Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
                     String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
                     dayLabels.add(label);
