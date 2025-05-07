@@ -1,12 +1,22 @@
 package com.example.newbudgetapp;
 
+import com.example.newbudgetapp.AchievementsActivity;
+import com.google.firebase.firestore.Source;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.components.LimitLine;
+import java.util.Random;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -26,6 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +49,8 @@ public class DashboardActivity extends AppCompatActivity {
     private List<Entry> incomeEntries = new ArrayList<>();
     private List<String> dayLabels = new ArrayList<>();
     private String userID;
-    private FirebaseAuth mAuth;
     private com.google.firebase.Timestamp lastTimestamp = null;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,20 +112,27 @@ public class DashboardActivity extends AppCompatActivity {
         prepareChartDataForCurrentMonth();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1001 && resultCode == RESULT_OK) {
-            FirebaseFirestore.getInstance()
-                    .collection("Users")
-                    .document(userID)
-                    .get()
-                    .addOnSuccessListener(snapshot -> {
-                        prepareChartDataForCurrentMonth();
-                    });
-        }
+    private void addGoalLineToChart(float goalAmount) {
+        LimitLine goalLine = new LimitLine(goalAmount, "Goal: $" + (int) goalAmount);
+        goalLine.setLineColor(Color.MAGENTA);
+        goalLine.setLineWidth(2f);
+        goalLine.setTextColor(Color.MAGENTA);
+        goalLine.setTextSize(12f);
+
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.removeAllLimitLines();  // Clear previous lines
+        leftAxis.addLimitLine(goalLine);
     }
 
+    private int generatePastelColor(String key) {
+        int hash = Math.abs(key.hashCode());
+        int red = (hash % 128) + 127;
+        int green = ((hash / 128) % 128) + 127;
+        int blue = ((hash / 16384) % 128) + 127;
+        return Color.rgb(red, green, blue);
+    }
+
+    // Methods
     private void prepareChartDataForCurrentMonth() {
         incomeEntries.clear();
         dayLabels.clear();
@@ -138,10 +156,8 @@ public class DashboardActivity extends AppCompatActivity {
                 });
 
                 float runningBalance = 0f;
-
                 for (Map<String, Object> entry : allEntries) {
                     float amount = ((Number) entry.get("amount")).floatValue();
-
                     if (entry.containsKey("category")) {
                         amount = -amount;
                     }
@@ -154,14 +170,7 @@ public class DashboardActivity extends AppCompatActivity {
                     dayLabels.add(label);
                 }
 
-                if (!allEntries.isEmpty()) {
-                    Map<String, Object> lastEntry = allEntries.get(allEntries.size() - 1);
-                    lastTimestamp = (com.google.firebase.Timestamp) lastEntry.get("timestamp");
-                }
-
-                updateChart();
-            } else {
-                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                updateChart();  // Redraws balance and goal lines
             }
         });
     }
@@ -181,53 +190,83 @@ public class DashboardActivity extends AppCompatActivity {
         balanceLine.setDrawCircles(false);
         balanceLine.setLineWidth(2f);
         balanceLine.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+
+        // Only show value label on the last data point
         balanceLine.setDrawValues(true);
-
-        LineData lineData = new LineData(balanceLine);
-        lineChart.setData(lineData);
-
-        float minY = 0f, maxY = 0f;
-        for (Entry entry : incomeEntries) {
-            float y = entry.getY();
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-        }
-
-        YAxis leftAxis = lineChart.getAxisLeft();
-        leftAxis.setAxisMinimum(minY - 50);
-        leftAxis.setAxisMaximum(maxY + 50);
-        leftAxis.setTextColor(Color.DKGRAY);
-        lineChart.getAxisRight().setEnabled(false);
-
-        DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("Users").document(userID);
-        userDocRef.get().addOnSuccessListener(doc -> {
-            if (doc.exists()) {
-                Map<String, Object> savingsGoal = (Map<String, Object>) doc.get("savingsGoal");
-                if (savingsGoal != null && savingsGoal.containsKey("goalAmount")) {
-                    float goalAmount = ((Number) savingsGoal.get("goalAmount")).floatValue();
-                    LimitLine goalLine = new LimitLine(goalAmount, "Goal: $" + (int) goalAmount);
-                    goalLine.setLineColor(Color.MAGENTA);
-                    goalLine.setLineWidth(2f);
-                    goalLine.setTextColor(Color.MAGENTA);
-                    goalLine.setTextSize(12f);
-                    leftAxis.removeAllLimitLines();
-                    leftAxis.addLimitLine(goalLine);
+        balanceLine.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getPointLabel(Entry entry) {
+                if (entry.equals(incomeEntries.get(incomeEntries.size() - 1))) {
+                    return String.valueOf((int) entry.getY());
+                } else {
+                    return "";
                 }
             }
-            lineChart.invalidate();
         });
 
-        lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(true);
+        lineChart.setData(new LineData(balanceLine));
 
-        XAxis xAxis = lineChart.getXAxis();
-        xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
-        xAxis.setGranularity(1f);
-        xAxis.setLabelRotationAngle(-45);
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextColor(Color.DKGRAY);
+        // === Fetch savings goals and apply limit lines ===
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = db.collection("Users").document(userID);
+
+        userDoc.get(Source.SERVER).addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
+
+                YAxis leftAxis = lineChart.getAxisLeft();
+                leftAxis.removeAllLimitLines();  // Clear old goals
+
+                float minY = Float.MAX_VALUE;
+                float maxY = Float.MIN_VALUE;
+                for (Entry entry : incomeEntries) {
+                    float y = entry.getY();
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+
+                float highestGoal = maxY;
+
+                if (goalsList != null) {
+                    for (Map<String, Object> goal : goalsList) {
+                        if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
+                            float amount = ((Number) goal.get("goalAmount")).floatValue();
+                            String name = (String) goal.get("goalName");
+
+                            LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
+                            int pastelColor = generatePastelColor(name); // `name` is the goalName
+                            goalLine.setLineColor(pastelColor);
+                            goalLine.setTextColor(pastelColor);
+                            goalLine.setLineWidth(2f);
+                            goalLine.setTextSize(10f);
+                            leftAxis.addLimitLine(goalLine);
+
+                            if (amount > highestGoal) highestGoal = amount;
+                        }
+                    }
+                }
+
+                leftAxis.setAxisMinimum(minY - 50);
+                leftAxis.setAxisMaximum(highestGoal + 50);
+                leftAxis.setTextColor(Color.DKGRAY);
+                lineChart.getAxisRight().setEnabled(false);
+                lineChart.getDescription().setEnabled(false);
+                lineChart.getLegend().setEnabled(true);
+
+                XAxis xAxis = lineChart.getXAxis();
+                xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
+                xAxis.setGranularity(1f);
+                xAxis.setLabelRotationAngle(-45);
+                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+                xAxis.setTextColor(Color.DKGRAY);
+
+                lineChart.invalidate();  // Refresh chart
+            }
+        });
     }
 
+
+    // Custom formatter to show day numbers (12, 13, etc.)
     public class DayValueFormatter extends ValueFormatter {
         private final List<String> dayLabels;
 
@@ -244,5 +283,153 @@ public class DashboardActivity extends AppCompatActivity {
                 return "";
             }
         }
+    }
+
+
+    // Grab income data
+    private void storeIncomeData(String userID, float income) {
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
+
+        userDoc.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
+                if (incomeList == null) incomeList = new ArrayList<>();
+
+                Map<String, Object> incomeData = new HashMap<>();
+                incomeData.put("amount", income);
+                incomeData.put("timestamp", com.google.firebase.Timestamp.now());
+                incomeList.add(incomeData);
+
+                userDoc.update("incomeEntries", incomeList)
+                        .addOnCompleteListener(updateTask -> {
+                            if (updateTask.isSuccessful()) {
+                                Toast.makeText(DashboardActivity.this, "Income updated successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartDataForCurrentMonth(); // ONLY run this when data is saved
+                            } else {
+                                Toast.makeText(DashboardActivity.this, "Failed to update income", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                // First-time setup
+                List<Map<String, Object>> initialIncomeList = new ArrayList<>();
+                Map<String, Object> incomeData = new HashMap<>();
+                incomeData.put("amount", income);
+                incomeData.put("timestamp", com.google.firebase.Timestamp.now());
+                initialIncomeList.add(incomeData);
+
+                userDoc.set(Collections.singletonMap("incomeEntries", initialIncomeList))
+                        .addOnCompleteListener(createTask -> {
+                            if (createTask.isSuccessful()) {
+                                Toast.makeText(DashboardActivity.this, "Income saved successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartDataForCurrentMonth(); //  Now safe to refresh
+                            } else {
+                                Toast.makeText(DashboardActivity.this, "Failed to save income", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        });
+    }
+
+    private void storeExpenseData(String userID, String category, float expense) {
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
+
+        userDoc.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
+                if (expenseList == null) expenseList = new ArrayList<>();
+
+                Map<String, Object> expenseData = new HashMap<>();
+                expenseData.put("amount", expense);
+                expenseData.put("category", category);
+                expenseData.put("timestamp", com.google.firebase.Timestamp.now());
+                expenseList.add(expenseData);
+
+                userDoc.update("expenseEntries", expenseList)
+                        .addOnCompleteListener(updateTask -> {
+                            if (updateTask.isSuccessful()) {
+                                Toast.makeText(DashboardActivity.this, "Expense updated successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartAppend();//  Only after it's saved
+                            } else {
+                                Toast.makeText(DashboardActivity.this, "Failed to update expense", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                // First-time setup
+                List<Map<String, Object>> initialExpenseList = new ArrayList<>();
+                Map<String, Object> expenseData = new HashMap<>();
+                expenseData.put("amount", expense);
+                expenseData.put("category", category);
+                expenseData.put("timestamp", com.google.firebase.Timestamp.now());
+                initialExpenseList.add(expenseData);
+
+                userDoc.set(Collections.singletonMap("expenseEntries", initialExpenseList))
+                        .addOnCompleteListener(createTask -> {
+                            if (createTask.isSuccessful()) {
+                                Toast.makeText(DashboardActivity.this, "Expense saved successfully", Toast.LENGTH_SHORT).show();
+                                prepareChartAppend();//  Safe to refresh
+                            } else {
+                                Toast.makeText(DashboardActivity.this, "Failed to save expense", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        });
+    }
+
+    private void prepareChartAppend() {
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
+
+        userDoc.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                List<Map<String, Object>> newEntries = new ArrayList<>();
+
+                List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
+                List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
+
+                if (incomeList != null) {
+                    for (Map<String, Object> entry : incomeList) {
+                        com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) entry.get("timestamp");
+                        if (lastTimestamp == null || timestamp.compareTo(lastTimestamp) > 0) {
+                            newEntries.add(entry);
+                        }
+                    }
+                }
+
+                if (expenseList != null) {
+                    for (Map<String, Object> entry : expenseList) {
+                        com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) entry.get("timestamp");
+                        if (lastTimestamp == null || timestamp.compareTo(lastTimestamp) > 0) {
+                            entry.put("amount", -((Number) entry.get("amount")).floatValue()); // make it negative
+                            newEntries.add(entry);
+                        }
+                    }
+                }
+
+                // Sort by timestamp
+                newEntries.sort((a, b) -> {
+                    Date da = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
+                    Date dbt = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
+                    return da.compareTo(dbt);
+                });
+
+                float lastY = incomeEntries.isEmpty() ? 0f : incomeEntries.get(incomeEntries.size() - 1).getY();
+
+                for (Map<String, Object> entry : newEntries) {
+                    float amount = ((Number) entry.get("amount")).floatValue();
+                    lastY += amount;
+
+                    incomeEntries.add(new Entry(incomeEntries.size(), lastY));
+
+                    Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
+                    String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
+                    dayLabels.add(label);
+
+                    lastTimestamp = (com.google.firebase.Timestamp) entry.get("timestamp"); // Update last seen
+                }
+                updateChart();
+            }
+        });
     }
 }

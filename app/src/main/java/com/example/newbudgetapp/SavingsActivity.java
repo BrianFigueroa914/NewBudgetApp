@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
+import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -108,18 +109,25 @@ public class SavingsActivity extends AppCompatActivity {
         float targetAmount = Float.parseFloat(targetAmountText);
         String deadline = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(selectedDate.getTime());
 
-        SavingsGoal newGoal = new SavingsGoal(targetNameText, targetAmount, deadline, 0);
+        Map<String, Object> goalMap = new HashMap<>();
+        goalMap.put("goalName", targetNameText);
+        goalMap.put("goalAmount", targetAmount);
+        goalMap.put("deadline", deadline);
+        goalMap.put("currentAmount", 0f);
+
         DocumentReference userDoc = db.collection("Users").document(userID);
 
-        userDoc.update("savingsGoals", FieldValue.arrayUnion(newGoal))
+        userDoc.update("savingsGoals", FieldValue.arrayUnion(goalMap))
                 .addOnSuccessListener(aVoid -> {
+                    // Update local UI
+                    SavingsGoal newGoal = new SavingsGoal(targetNameText, targetAmount, deadline, 0);
                     savingsGoals.add(newGoal);
                     goalAdapter.notifyDataSetChanged();
                     goalTargetName.setText("");
                     savingsTargetInput.setText("");
                     deadlineDate.setText("Deadline: Not Set");
 
-
+                    // Log a $0 expense entry for tracking
                     Map<String, Object> expenseEntry = new HashMap<>();
                     expenseEntry.put("amount", 0f);
                     expenseEntry.put("category", "Saved to Goal: " + targetNameText);
@@ -130,9 +138,14 @@ public class SavingsActivity extends AppCompatActivity {
                         if (expenseList == null) expenseList = new ArrayList<>();
                         expenseList.add(expenseEntry);
                         userDoc.update("expenseEntries", expenseList);
+
+                        // ✅ Navigate back to Dashboard to refresh chart
+                        Intent intent = new Intent(SavingsActivity.this, DashboardActivity.class);
+                        startActivity(intent);
                     });
                 });
     }
+
 
 
     private void addNewBudget() {
