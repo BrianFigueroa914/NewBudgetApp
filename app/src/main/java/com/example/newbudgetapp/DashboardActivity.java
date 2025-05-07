@@ -1,5 +1,5 @@
 package com.example.newbudgetapp;
-
+import com.github.mikephil.charting.components.Legend;
 import com.example.newbudgetapp.AchievementsActivity;
 import com.google.firebase.firestore.Source;
 import com.github.mikephil.charting.components.YAxis;
@@ -19,6 +19,8 @@ import android.widget.Toast;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+
 
 import com.example.newbudgetapp.AddExpenseActivity;
 import com.github.mikephil.charting.charts.LineChart;
@@ -190,29 +192,28 @@ public class DashboardActivity extends AppCompatActivity {
         balanceLine.setDrawCircles(false);
         balanceLine.setLineWidth(2f);
         balanceLine.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-
-        // Only show value label on the last data point
         balanceLine.setDrawValues(true);
+
         balanceLine.setValueFormatter(new ValueFormatter() {
             @Override
             public String getPointLabel(Entry entry) {
-                if (entry.equals(incomeEntries.get(incomeEntries.size() - 1))) {
+                if (!incomeEntries.isEmpty() && entry.getX() == incomeEntries.get(incomeEntries.size() - 1).getX()) {
                     return String.valueOf((int) entry.getY());
-                } else {
-                    return "";
                 }
+                return "";
             }
         });
 
-        lineChart.setData(new LineData(balanceLine));
+        List<ILineDataSet> allDataSets = new ArrayList<>();
+        allDataSets.add(balanceLine); // Add main balance line
 
-        // === Fetch savings goals and apply limit lines ===
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference userDoc = db.collection("Users").document(userID);
 
         userDoc.get(Source.SERVER).addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
+                List<Map<String, Object>> budgetList = (List<Map<String, Object>>) doc.get("budgets");
 
                 YAxis leftAxis = lineChart.getAxisLeft();
                 leftAxis.removeAllLimitLines();  // Clear old goals
@@ -227,31 +228,77 @@ public class DashboardActivity extends AppCompatActivity {
 
                 float highestGoal = maxY;
 
+                // Draw savings goals
                 if (goalsList != null) {
                     for (Map<String, Object> goal : goalsList) {
                         if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
                             float amount = ((Number) goal.get("goalAmount")).floatValue();
                             String name = (String) goal.get("goalName");
 
+                            int pastelColor = generatePastelColor(name);
+
                             LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
-                            int pastelColor = generatePastelColor(name); // `name` is the goalName
                             goalLine.setLineColor(pastelColor);
                             goalLine.setTextColor(pastelColor);
                             goalLine.setLineWidth(2f);
                             goalLine.setTextSize(10f);
                             leftAxis.addLimitLine(goalLine);
 
+                            Entry dummyEntry = new Entry(0, 0);
+                            LineDataSet goalLegend = new LineDataSet(Collections.singletonList(dummyEntry), name + ": $" + (int) amount);
+                            goalLegend.setColor(pastelColor);
+                            goalLegend.setDrawValues(false);
+                            goalLegend.setDrawCircles(false);
+                            goalLegend.setLineWidth(0f);
+                            goalLegend.setHighlightEnabled(false);
+                            goalLegend.setVisible(false);
+                            allDataSets.add(goalLegend);
+
                             if (amount > highestGoal) highestGoal = amount;
                         }
                     }
                 }
 
+                // Draw total budget limit line
+                if (budgetList != null && !budgetList.isEmpty()) {
+                    float totalBudgetLimit = 0f;
+                    for (Map<String, Object> b : budgetList) {
+                        if (b.containsKey("limit")) {
+                            totalBudgetLimit += ((Number) b.get("limit")).floatValue();
+                        }
+                    }
+
+                    LimitLine budgetLine = new LimitLine(totalBudgetLimit, "Budget Limit: $" + (int) totalBudgetLimit);
+                    budgetLine.setLineColor(Color.RED);
+                    budgetLine.setTextColor(Color.RED);
+                    budgetLine.setLineWidth(2f);
+                    budgetLine.setTextSize(12f);
+                    leftAxis.addLimitLine(budgetLine);
+
+                    // Update Y max if needed
+                    if (totalBudgetLimit > highestGoal) highestGoal = totalBudgetLimit;
+                }
+
+                // Apply all datasets
+                lineChart.setData(new LineData(allDataSets));
+
                 leftAxis.setAxisMinimum(minY - 50);
                 leftAxis.setAxisMaximum(highestGoal + 50);
                 leftAxis.setTextColor(Color.DKGRAY);
+
                 lineChart.getAxisRight().setEnabled(false);
                 lineChart.getDescription().setEnabled(false);
-                lineChart.getLegend().setEnabled(true);
+
+                Legend legend = lineChart.getLegend();
+                legend.setEnabled(true);
+                legend.setWordWrapEnabled(true);
+                legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+                legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+                legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+                legend.setDrawInside(false);
+                legend.setTextSize(12f);
+
+                lineChart.setExtraBottomOffset(48f);
 
                 XAxis xAxis = lineChart.getXAxis();
                 xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
@@ -260,11 +307,10 @@ public class DashboardActivity extends AppCompatActivity {
                 xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                 xAxis.setTextColor(Color.DKGRAY);
 
-                lineChart.invalidate();  // Refresh chart
+                lineChart.invalidate(); // Redraw
             }
         });
     }
-
 
     // Custom formatter to show day numbers (12, 13, etc.)
     public class DayValueFormatter extends ValueFormatter {

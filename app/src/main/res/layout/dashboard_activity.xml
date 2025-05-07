@@ -24,7 +24,8 @@
         android:layout_marginTop="40dp"
         android:layout_marginStart="20dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        android:fontFamily="@font/lato_regular" />
 
     <TextView
         android:id="@+id/monthLabel"
@@ -34,10 +35,11 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/black"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         app:layout_constraintTop_toBottomOf="@+id/incomeBalanceText"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:fontFamily="@font/opensans_bold" />
 
     <TextView
         android:id="@+id/incomeBalanceText"
@@ -48,9 +50,10 @@
         android:textStyle="bold"
         android:textColor="@color/black"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="6dp"
         app:layout_constraintTop_toBottomOf="@id/usernameText"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:fontFamily="@font/montserrat_semibold" />
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/lineChart"
@@ -62,7 +65,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/incomeBalanceText" />
+        app:layout_constraintTop_toBottomOf="@id/monthLabel" />
 
     <!-- First Row of Cards -->
     <LinearLayout

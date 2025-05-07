@@ -1,95 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".settingsHome">
+    android:fillViewport="true"
+    android:background="@color/design_default_color_background">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/jade">
+        android:padding="16dp">
 
+        <!-- Header -->
         <ImageButton
             android:id="@+id/homeBtn"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:padding="14dp"
             android:src="@drawable/round_arrow_back_24"
-            android:background="@color/transparent"/>
+            android:background="@color/transparent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
+            android:id="@+id/settingsHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/settings"
+            android:text="Settings"
             android:textSize="20sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/homeBtn"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/homeBtn"
+            app:layout_constraintHorizontal_bias="0.5" />
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        <!-- Bill Reminders -->
+        <TextView
+            android:id="@+id/billReminderLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Bill Reminders"
+            android:textSize="16sp"
+            app:layout_constraintTop_toBottomOf="@id/homeBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/billRemindersBtn"
+            android:padding="8dp" />
 
         <ImageButton
             android:id="@+id/billRemindersBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="350dp"
+            android:src="@drawable/round_arrow_forward_24"
             android:background="@color/transparent"
-            android:src="@drawable/round_arrow_forward_24"/>
+            app:layout_constraintTop_toTopOf="@id/billReminderLabel"
+            app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- Schedule Updates -->
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/scheduleUpdatesLabel"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/bill_reminders"
-            android:textSize="15sp"
-            android:padding="14dp"/>
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/schedule_updates"
-            android:textSize="15sp"
-            android:padding="14dp"/>
+            android:text="Schedule Updates"
+            android:textSize="16sp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/billReminderLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/scheduleUpdatesBtn" />
 
         <ImageButton
             android:id="@+id/scheduleUpdatesBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="350dp"
+            android:src="@drawable/round_arrow_forward_24"
             android:background="@color/transparent"
-            android:src="@drawable/round_arrow_forward_24"/>
+            app:layout_constraintTop_toTopOf="@id/scheduleUpdatesLabel"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    </RelativeLayout>
+        <!-- Reset Graph -->
+        <Button
+            android:id="@+id/resetGraphBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Reset Graph Data"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/black"
+            android:background="@drawable/square_button"
+            app:backgroundTint="@null"
+            app:layout_constraintTop_toBottomOf="@id/scheduleUpdatesLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/resetGraphBtn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/black"
-        android:text="@string/reset_graph"
-        android:background="@drawable/square_button"
-        app:backgroundTint="@null"/>
+        <!-- Reset Budgets -->
+        <Button
+            android:id="@+id/resetBudgetsBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Clear Budgeting Data"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/black"
+            android:background="@drawable/square_button"
+            app:backgroundTint="@null"
+            app:layout_constraintTop_toBottomOf="@id/resetGraphBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/signOutBtn"
-        android:layout_gravity="center"
-        android:text="@string/sign_out"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:textColor="@color/black"
-        android:background="@drawable/square_button"
-        app:backgroundTint="@null"/>
-</LinearLayout>
+        <!-- Reset Savings -->
+        <Button
+            android:id="@+id/resetSavingsBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Clear Savings Goals"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/black"
+            android:background="@drawable/square_button"
+            app:backgroundTint="@null"
+            app:layout_constraintTop_toBottomOf="@id/resetBudgetsBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Sign Out -->
+        <Button
+            android:id="@+id/signOutBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Sign Out"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/black"
+            android:background="@drawable/square_button"
+            app:backgroundTint="@null"
+            app:layout_constraintTop_toBottomOf="@id/resetSavingsBtn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

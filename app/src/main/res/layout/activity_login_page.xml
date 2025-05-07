@@ -16,7 +16,8 @@
         android:textAlignment="center"
         android:textColor="@color/taupe"
         android:textSize="36sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:fontFamily="@font/lato_regular"/>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
