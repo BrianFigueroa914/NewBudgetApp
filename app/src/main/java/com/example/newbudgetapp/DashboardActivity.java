@@ -4,7 +4,7 @@ import com.example.newbudgetapp.AchievementsActivity;
 
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.components.LimitLine;
-
+import java.util.Random;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -60,6 +60,14 @@ public class DashboardActivity extends AppCompatActivity {
         YAxis leftAxis = lineChart.getAxisLeft();
         leftAxis.removeAllLimitLines();  // Clear previous lines
         leftAxis.addLimitLine(goalLine);
+    }
+
+    private int generatePastelColor() {
+        Random random = new Random();
+        int red = (random.nextInt(128) + 127);
+        int green = (random.nextInt(128) + 127);
+        int blue = (random.nextInt(128) + 127);
+        return Color.rgb(red, green, blue);
     }
 
     private FirebaseAuth mAuth;
@@ -183,13 +191,10 @@ public class DashboardActivity extends AppCompatActivity {
                 List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
-                // Use a list of timestamped changes (positive for income, negative for expense)
                 List<Map<String, Object>> allEntries = new ArrayList<>();
-
                 if (incomeList != null) allEntries.addAll(incomeList);
                 if (expenseList != null) allEntries.addAll(expenseList);
 
-                // Sort all entries by timestamp
                 allEntries.sort((a, b) -> {
                     Date dateA = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
                     Date dateB = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
@@ -197,86 +202,72 @@ public class DashboardActivity extends AppCompatActivity {
                 });
 
                 float runningBalance = 0f;
-
                 for (Map<String, Object> entry : allEntries) {
                     float amount = ((Number) entry.get("amount")).floatValue();
-
-                    // Check if it's an expense
                     if (entry.containsKey("category")) {
                         String category = (String) entry.get("category");
                         if (!category.toLowerCase(Locale.ROOT).contains("income")) {
                             amount = -amount;
                         }
                     }
-
-
                     runningBalance += amount;
-
                     incomeEntries.add(new Entry(incomeEntries.size(), runningBalance));
-
-
                     Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
                     String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
                     dayLabels.add(label);
                 }
 
-                if (!allEntries.isEmpty()) {
-                    Map<String, Object> lastEntry = allEntries.get(allEntries.size() - 1);
-                    lastTimestamp = (com.google.firebase.Timestamp) lastEntry.get("timestamp");
-                }
-
-                // Fetch savings goals and budgets and draw lines
-                DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("Users").document(userID);
-                userDocRef.get().addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        // === SAVINGS GOALS ===
-                        List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
-
-                        if (goalsList != null && !goalsList.isEmpty()) {
-                            float maxGoal = 0;
-                            for (Map<String, Object> g : goalsList) {
-                                if (g.containsKey("goalAmount")) {
-                                    float amt = ((Number) g.get("goalAmount")).floatValue();
-                                    if (amt > maxGoal) maxGoal = amt;
-                                }
-                            }
-
-                            addGoalLineToChart(maxGoal);
-                        }
-
-                        // === BUDGET LIMITS ===
-                        List<Map<String, Object>> budgetList = (List<Map<String, Object>>) doc.get("budgets");
-                        if (budgetList != null) {
-                            for (Map<String, Object> b : budgetList) {
-                                String category = (String) b.get("category");
-                                float limit = ((Number) b.get("limit")).floatValue();
-
-                                LimitLine budgetLine = new LimitLine(limit, category + " Limit: $" + (int) limit);
-                                budgetLine.setLineColor(Color.BLUE);
-                                budgetLine.setLineWidth(1.5f);
-                                budgetLine.setTextColor(Color.BLUE);
-                                budgetLine.setTextSize(10f);
-                                budgetLine.enableDashedLine(10f, 10f, 0);
-
-                                lineChart.getAxisLeft().addLimitLine(budgetLine);
-                            }
-                        }
-
-                        lineChart.invalidate(); // Refresh chart after adding new lines
-                    }
-                });
-
-
-
-                updateChart();
-            } else {
-                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                updateChart();  // Initial balance line
             }
+        });
+
+        // === LIVE LISTENER for savings goals ===
+        userDoc.addSnapshotListener((doc, e) -> {
+            if (e != null || doc == null || !doc.exists()) return;
+
+            List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
+
+            YAxis leftAxis = lineChart.getAxisLeft();
+            leftAxis.removeAllLimitLines();  // Clear old goals
+
+            // Recalculate min/max Y values from income entries
+            float minY = Float.MAX_VALUE;
+            float maxY = Float.MIN_VALUE;
+            for (Entry entry : incomeEntries) {
+                float y = entry.getY();
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+
+            float highestGoalAmount = maxY;
+
+            if (goalsList != null && !goalsList.isEmpty()) {
+                for (Map<String, Object> goal : goalsList) {
+                    if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
+                        float goalAmount = ((Number) goal.get("goalAmount")).floatValue();
+                        String goalName = (String) goal.get("goalName");
+
+                        LimitLine line = new LimitLine(goalAmount, goalName + ": $" + (int) goalAmount);
+                        int color = generatePastelColor();
+                        line.setLineColor(color);
+                        line.setTextColor(color);
+                        line.setLineWidth(2f);
+                        line.setTextSize(10f);
+                        leftAxis.addLimitLine(line);
+
+                        if (goalAmount > highestGoalAmount) highestGoalAmount = goalAmount;
+                    }
+                }
+            }
+
+            leftAxis.setAxisMinimum(minY - 50);
+            leftAxis.setAxisMaximum(highestGoalAmount + 50);
+            lineChart.invalidate();  // Redraw chart
         });
     }
 
-    private void updateChart() {
 
+    private void updateChart() {
         TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
 
         if (!incomeEntries.isEmpty()) {
@@ -286,18 +277,10 @@ public class DashboardActivity extends AppCompatActivity {
             incomeBalanceText.setText("Balance: $0.00");
         }
 
-        // Update the visible balance based on the last data point
-        if (!incomeEntries.isEmpty()) {
-            float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
-            incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
-        }
-
         // Chart appearance settings
         lineChart.getAxisLeft().removeAllLimitLines();
         LineDataSet balanceLine = new LineDataSet(incomeEntries, "Balance");
         balanceLine.setColor(Color.GREEN);
-
-        // === Balance line dataset ===
         balanceLine.setDrawCircles(false);
         balanceLine.setLineWidth(2f);
         balanceLine.setMode(LineDataSet.Mode.CUBIC_BEZIER);
@@ -307,8 +290,8 @@ public class DashboardActivity extends AppCompatActivity {
         lineChart.setData(lineData);
 
         // === Calculate min/max Y from data entries ===
-        final float[] minY = {0f};
-        final float[] maxY = {0f};
+        final float[] minY = {Float.MAX_VALUE};
+        final float[] maxY = {Float.MIN_VALUE};
 
         for (Entry entry : incomeEntries) {
             float y = entry.getY();
@@ -316,31 +299,34 @@ public class DashboardActivity extends AppCompatActivity {
             if (y > maxY[0]) maxY[0] = y;
         }
 
-        // === Fetch savings goal and apply Y-axis scaling ===
+        // === Fetch savings goals and apply limit lines ===
         DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("Users").document(userID);
         userDocRef.get().addOnSuccessListener(doc -> {
-            final float[] goalAmount = new float[1]; // goal wrapper for lambda
-
             if (doc.exists()) {
                 List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
 
                 YAxis leftAxis = lineChart.getAxisLeft();
-                leftAxis.removeAllLimitLines();  // Clear any previous lines
+                leftAxis.removeAllLimitLines();  // Clear any previous goal lines
 
-                float highestGoalAmount = maxY[0];  // Track largest to set Y-axis upper bound
+                float highestGoalAmount = Float.MIN_VALUE;
+                if (maxY[0] > highestGoalAmount) {
+                    highestGoalAmount = maxY[0];
+                }
 
                 if (goalsList != null && !goalsList.isEmpty()) {
-                    for (Map<String, Object> goal : goalsList) {
+                    for (int i = 0; i < goalsList.size(); i++) {
+                        Map<String, Object> goal = goalsList.get(i);
                         if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
                             float amount = ((Number) goal.get("goalAmount")).floatValue();
                             String name = (String) goal.get("goalName");
 
-                            // Add magenta line for each goal
                             LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
-                            goalLine.setLineColor(Color.MAGENTA);
+                            int pastelColor = generatePastelColor();
+                            goalLine.setLineColor(pastelColor);
+                            goalLine.setTextColor(pastelColor);
                             goalLine.setLineWidth(2f);
-                            goalLine.setTextColor(Color.MAGENTA);
                             goalLine.setTextSize(10f);
+
                             leftAxis.addLimitLine(goalLine);
 
                             if (amount > highestGoalAmount) highestGoalAmount = amount;
@@ -348,19 +334,15 @@ public class DashboardActivity extends AppCompatActivity {
                     }
                 }
 
-                // Ensure Y-axis scaling includes all goal lines
+                // Smart Y-axis scaling
                 leftAxis.setAxisMinimum(minY[0] - 50);
                 leftAxis.setAxisMaximum(highestGoalAmount + 50);
 
-                lineChart.invalidate();  // Refresh the chart
+                lineChart.invalidate(); // Refresh chart
             }
-
-
-
-            lineChart.invalidate(); // Refresh chart after goal line and axis are set
         });
 
-        // === Other visual settings ===
+        // === Chart base settings ===
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(true);
         lineChart.getAxisRight().setEnabled(false);
@@ -375,6 +357,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         lineChart.getAxisLeft().setTextColor(Color.DKGRAY);
     }
+
 
 
 
@@ -396,6 +379,7 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
     }
+
 
     // Grab income data
     private void storeIncomeData(String userID, float income) {
