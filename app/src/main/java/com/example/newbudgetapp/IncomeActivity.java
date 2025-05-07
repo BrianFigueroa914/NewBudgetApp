@@ -64,8 +64,23 @@ public class IncomeActivity extends AppCompatActivity {
 
             DocumentReference userDoc = db.collection("Users").document(userID);
             userDoc.get().addOnSuccessListener(documentSnapshot -> {
-                List<Map<String, Object>> incomeList = (List<Map<String, Object>>) documentSnapshot.get("incomeEntries");
-                if (incomeList == null) incomeList = new ArrayList<>();
+                Object rawIncomeData = documentSnapshot.get("incomeEntries");
+                List<Map<String, Object>> incomeList = new ArrayList<>();
+
+                if (rawIncomeData instanceof List<?>) {
+                    for (Object item : (List<?>) rawIncomeData) {
+                        if (item instanceof Map<?, ?>) {
+                            Map<String, Object> incomeMap = new HashMap<>();
+                            for (Map.Entry<?, ?> entry : ((Map<?, ?>) item).entrySet()) {
+                                if (entry.getKey() instanceof String) {
+                                    incomeMap.put((String) entry.getKey(), entry.getValue());
+                                }
+                            }
+                            incomeList.add(incomeMap);
+                        }
+                    }
+                }
+
                 incomeList.add(incomeData);
                 userDoc.update("incomeEntries", incomeList)
                         .addOnSuccessListener(aVoid -> {
