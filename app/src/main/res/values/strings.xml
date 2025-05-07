@@ -54,6 +54,8 @@
     <string name="deadline">Deadline</string>
     <string name="target">Target</string>
     <string name="remaining">Remaining</string>
+    <string name="budgeting">Budgeting</string>
+    <string name="achievements_and_leaderboard"><![CDATA[Achievements & Leaderboard]]></string>
 
 
 </resources>
