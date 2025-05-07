@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
+import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -118,7 +119,7 @@ public class SavingsActivity extends AppCompatActivity {
 
         userDoc.update("savingsGoals", FieldValue.arrayUnion(goalMap))
                 .addOnSuccessListener(aVoid -> {
-                    // Optional: recreate the local object for display in RecyclerView
+                    // Update local UI
                     SavingsGoal newGoal = new SavingsGoal(targetNameText, targetAmount, deadline, 0);
                     savingsGoals.add(newGoal);
                     goalAdapter.notifyDataSetChanged();
@@ -126,7 +127,7 @@ public class SavingsActivity extends AppCompatActivity {
                     savingsTargetInput.setText("");
                     deadlineDate.setText("Deadline: Not Set");
 
-                    // Still log an expense with $0 to preserve behavior
+                    // Log a $0 expense entry for tracking
                     Map<String, Object> expenseEntry = new HashMap<>();
                     expenseEntry.put("amount", 0f);
                     expenseEntry.put("category", "Saved to Goal: " + targetNameText);
@@ -137,9 +138,14 @@ public class SavingsActivity extends AppCompatActivity {
                         if (expenseList == null) expenseList = new ArrayList<>();
                         expenseList.add(expenseEntry);
                         userDoc.update("expenseEntries", expenseList);
+
+                        // ✅ Navigate back to Dashboard to refresh chart
+                        Intent intent = new Intent(SavingsActivity.this, DashboardActivity.class);
+                        startActivity(intent);
                     });
                 });
     }
+
 
 
     private void addNewBudget() {
