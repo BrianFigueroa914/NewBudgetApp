@@ -1,5 +1,5 @@
 package com.example.newbudgetapp;
-
+import com.github.mikephil.charting.components.Legend;
 import com.example.newbudgetapp.AchievementsActivity;
 import com.google.firebase.firestore.Source;
 import com.github.mikephil.charting.components.YAxis;
@@ -19,6 +19,8 @@ import android.widget.Toast;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+
 
 import com.example.newbudgetapp.AddExpenseActivity;
 import com.github.mikephil.charting.charts.LineChart;
@@ -185,28 +187,28 @@ public class DashboardActivity extends AppCompatActivity {
             incomeBalanceText.setText("Balance: $0.00");
         }
 
+        // Balance line setup
         LineDataSet balanceLine = new LineDataSet(incomeEntries, "Balance");
         balanceLine.setColor(Color.GREEN);
         balanceLine.setDrawCircles(false);
         balanceLine.setLineWidth(2f);
         balanceLine.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-
-        // Only show value label on the last data point
         balanceLine.setDrawValues(true);
+
         balanceLine.setValueFormatter(new ValueFormatter() {
             @Override
             public String getPointLabel(Entry entry) {
-                if (entry.equals(incomeEntries.get(incomeEntries.size() - 1))) {
+                if (!incomeEntries.isEmpty() && entry.getX() == incomeEntries.get(incomeEntries.size() - 1).getX()) {
                     return String.valueOf((int) entry.getY());
-                } else {
-                    return "";
                 }
+                return "";
             }
         });
 
-        lineChart.setData(new LineData(balanceLine));
+        // Collect all datasets
+        List<ILineDataSet> allDataSets = new ArrayList<>();
+        allDataSets.add(balanceLine); // Add main balance line
 
-        // === Fetch savings goals and apply limit lines ===
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference userDoc = db.collection("Users").document(userID);
 
@@ -233,26 +235,56 @@ public class DashboardActivity extends AppCompatActivity {
                             float amount = ((Number) goal.get("goalAmount")).floatValue();
                             String name = (String) goal.get("goalName");
 
+                            int pastelColor = generatePastelColor(name);
+
+                            // Add visible goal line
                             LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
-                            int pastelColor = generatePastelColor(name); // `name` is the goalName
                             goalLine.setLineColor(pastelColor);
                             goalLine.setTextColor(pastelColor);
                             goalLine.setLineWidth(2f);
                             goalLine.setTextSize(10f);
                             leftAxis.addLimitLine(goalLine);
 
+                            // Add dummy LineDataSet for legend entry
+                            Entry dummyEntry = new Entry(0, 0); // Not drawn
+                            LineDataSet goalLegend = new LineDataSet(Collections.singletonList(dummyEntry), name + ": $" + (int) amount);
+                            goalLegend.setColor(pastelColor);
+                            goalLegend.setDrawValues(false);
+                            goalLegend.setDrawCircles(false);
+                            goalLegend.setLineWidth(0f);
+                            goalLegend.setHighlightEnabled(false);
+                            goalLegend.setVisible(false); // Not drawn on graph
+                            allDataSets.add(goalLegend);
+
                             if (amount > highestGoal) highestGoal = amount;
                         }
                     }
                 }
 
+                // Apply to chart
+                lineChart.setData(new LineData(allDataSets));
+
                 leftAxis.setAxisMinimum(minY - 50);
                 leftAxis.setAxisMaximum(highestGoal + 50);
                 leftAxis.setTextColor(Color.DKGRAY);
+
                 lineChart.getAxisRight().setEnabled(false);
                 lineChart.getDescription().setEnabled(false);
-                lineChart.getLegend().setEnabled(true);
 
+                // Legend formatting
+                Legend legend = lineChart.getLegend();
+                legend.setEnabled(true);
+                legend.setWordWrapEnabled(true);  // ✅ allow wrapping
+                legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+                legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+                legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+                legend.setDrawInside(false);
+                legend.setTextSize(12f);
+
+                lineChart.setExtraBottomOffset(48f);  // ✅ allow space for multiple rows
+
+
+                // X-axis formatting
                 XAxis xAxis = lineChart.getXAxis();
                 xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
                 xAxis.setGranularity(1f);
@@ -260,10 +292,11 @@ public class DashboardActivity extends AppCompatActivity {
                 xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                 xAxis.setTextColor(Color.DKGRAY);
 
-                lineChart.invalidate();  // Refresh chart
+                lineChart.invalidate(); // Redraw
             }
         });
     }
+
 
 
     // Custom formatter to show day numbers (12, 13, etc.)
