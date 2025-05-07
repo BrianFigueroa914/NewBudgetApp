@@ -187,7 +187,6 @@ public class DashboardActivity extends AppCompatActivity {
             incomeBalanceText.setText("Balance: $0.00");
         }
 
-        // Balance line setup
         LineDataSet balanceLine = new LineDataSet(incomeEntries, "Balance");
         balanceLine.setColor(Color.GREEN);
         balanceLine.setDrawCircles(false);
@@ -205,7 +204,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Collect all datasets
         List<ILineDataSet> allDataSets = new ArrayList<>();
         allDataSets.add(balanceLine); // Add main balance line
 
@@ -215,6 +213,7 @@ public class DashboardActivity extends AppCompatActivity {
         userDoc.get(Source.SERVER).addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
+                List<Map<String, Object>> budgetList = (List<Map<String, Object>>) doc.get("budgets");
 
                 YAxis leftAxis = lineChart.getAxisLeft();
                 leftAxis.removeAllLimitLines();  // Clear old goals
@@ -229,6 +228,7 @@ public class DashboardActivity extends AppCompatActivity {
 
                 float highestGoal = maxY;
 
+                // Draw savings goals
                 if (goalsList != null) {
                     for (Map<String, Object> goal : goalsList) {
                         if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
@@ -237,7 +237,6 @@ public class DashboardActivity extends AppCompatActivity {
 
                             int pastelColor = generatePastelColor(name);
 
-                            // Add visible goal line
                             LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
                             goalLine.setLineColor(pastelColor);
                             goalLine.setTextColor(pastelColor);
@@ -245,15 +244,14 @@ public class DashboardActivity extends AppCompatActivity {
                             goalLine.setTextSize(10f);
                             leftAxis.addLimitLine(goalLine);
 
-                            // Add dummy LineDataSet for legend entry
-                            Entry dummyEntry = new Entry(0, 0); // Not drawn
+                            Entry dummyEntry = new Entry(0, 0);
                             LineDataSet goalLegend = new LineDataSet(Collections.singletonList(dummyEntry), name + ": $" + (int) amount);
                             goalLegend.setColor(pastelColor);
                             goalLegend.setDrawValues(false);
                             goalLegend.setDrawCircles(false);
                             goalLegend.setLineWidth(0f);
                             goalLegend.setHighlightEnabled(false);
-                            goalLegend.setVisible(false); // Not drawn on graph
+                            goalLegend.setVisible(false);
                             allDataSets.add(goalLegend);
 
                             if (amount > highestGoal) highestGoal = amount;
@@ -261,7 +259,27 @@ public class DashboardActivity extends AppCompatActivity {
                     }
                 }
 
-                // Apply to chart
+                // Draw total budget limit line
+                if (budgetList != null && !budgetList.isEmpty()) {
+                    float totalBudgetLimit = 0f;
+                    for (Map<String, Object> b : budgetList) {
+                        if (b.containsKey("limit")) {
+                            totalBudgetLimit += ((Number) b.get("limit")).floatValue();
+                        }
+                    }
+
+                    LimitLine budgetLine = new LimitLine(totalBudgetLimit, "Budget Limit: $" + (int) totalBudgetLimit);
+                    budgetLine.setLineColor(Color.RED);
+                    budgetLine.setTextColor(Color.RED);
+                    budgetLine.setLineWidth(2f);
+                    budgetLine.setTextSize(12f);
+                    leftAxis.addLimitLine(budgetLine);
+
+                    // Update Y max if needed
+                    if (totalBudgetLimit > highestGoal) highestGoal = totalBudgetLimit;
+                }
+
+                // Apply all datasets
                 lineChart.setData(new LineData(allDataSets));
 
                 leftAxis.setAxisMinimum(minY - 50);
@@ -271,20 +289,17 @@ public class DashboardActivity extends AppCompatActivity {
                 lineChart.getAxisRight().setEnabled(false);
                 lineChart.getDescription().setEnabled(false);
 
-                // Legend formatting
                 Legend legend = lineChart.getLegend();
                 legend.setEnabled(true);
-                legend.setWordWrapEnabled(true);  // ✅ allow wrapping
+                legend.setWordWrapEnabled(true);
                 legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
                 legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
                 legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
                 legend.setDrawInside(false);
                 legend.setTextSize(12f);
 
-                lineChart.setExtraBottomOffset(48f);  // ✅ allow space for multiple rows
+                lineChart.setExtraBottomOffset(48f);
 
-
-                // X-axis formatting
                 XAxis xAxis = lineChart.getXAxis();
                 xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
                 xAxis.setGranularity(1f);
@@ -296,8 +311,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
-
-
 
     // Custom formatter to show day numbers (12, 13, etc.)
     public class DayValueFormatter extends ValueFormatter {
