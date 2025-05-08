@@ -1,32 +1,22 @@
 package com.example.newbudgetapp;
 import com.github.mikephil.charting.components.Legend;
-import com.example.newbudgetapp.AchievementsActivity;
 import com.google.firebase.firestore.Source;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.components.LimitLine;
-import java.util.Random;
+
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
+
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
-
-import com.example.newbudgetapp.AddExpenseActivity;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -183,6 +173,8 @@ public class DashboardActivity extends AppCompatActivity {
         if (!incomeEntries.isEmpty()) {
             float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
             incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
+            storeBalanceData(latestBalance);
+
         } else {
             incomeBalanceText.setText("Balance: $0.00");
         }
@@ -312,6 +304,23 @@ public class DashboardActivity extends AppCompatActivity {
         });
     }
 
+    private void storeBalanceData(float balance) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = db.collection("Users").document(userID);
+
+        Map<String, Object> updateData = new HashMap<>();
+        updateData.put("currentBalance", balance);
+
+        userDoc.update(updateData)
+                .addOnSuccessListener(aVoid -> {
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(DashboardActivity.this, "Failed to store balance", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                });
+    }
+
+
     // Custom formatter to show day numbers (12, 13, etc.)
     public class DayValueFormatter extends ValueFormatter {
         private final List<String> dayLabels;
@@ -331,7 +340,7 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    // Grab income data
+/*    // Grab income data
     private void storeIncomeData(String userID, float income) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
@@ -476,5 +485,5 @@ public class DashboardActivity extends AppCompatActivity {
                 updateChart();
             }
         });
-    }
+    }*/
 }

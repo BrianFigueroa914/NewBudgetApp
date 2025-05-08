@@ -40,5 +40,5 @@
         android:layout_gravity="center_vertical"
         android:src="@android:drawable/btn_star_big_off"
         android:contentDescription="Star icon"
-        app:tint="#333333" />
+        app:tint="?attr/colorAccent" />
 </LinearLayout>
