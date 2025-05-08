@@ -49,7 +49,6 @@ public class visualAnalytics extends AppCompatActivity {
         }
         else
             finish(); // Redirect to login
-
     }
 
     private void fetchExpenseData() {
@@ -57,7 +56,7 @@ public class visualAnalytics extends AppCompatActivity {
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
                 if (expenseList != null) {
@@ -67,9 +66,11 @@ public class visualAnalytics extends AppCompatActivity {
                         String category = (String) expense.get("category");
                         float amount = ((Number) expense.get("amount")).floatValue();
 
-                        categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        // Exclude "Saved to Goal" entries
+                        if (!category.contains("Saved to Goal:")) {
+                            categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        }
                     }
-
                     generatePieChart(categoryTotals); // Pass categorized totals to Pie Chart method
                 }
             }
@@ -96,6 +97,4 @@ public class visualAnalytics extends AppCompatActivity {
 
         pieChart.invalidate(); // Refresh chart
     }
-
-
 }

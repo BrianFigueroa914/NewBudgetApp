@@ -139,7 +139,7 @@ public class SavingsActivity extends AppCompatActivity {
                         expenseList.add(expenseEntry);
                         userDoc.update("expenseEntries", expenseList);
 
-                        // ✅ Navigate back to Dashboard to refresh chart
+                        // Navigate back to Dashboard to refresh chart
                         Intent intent = new Intent(SavingsActivity.this, DashboardActivity.class);
                         startActivity(intent);
                     });

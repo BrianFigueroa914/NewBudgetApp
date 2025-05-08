@@ -331,7 +331,6 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-
     // Grab income data
     private void storeIncomeData(String userID, float income) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
