@@ -56,6 +56,11 @@
     <string name="remaining">Remaining</string>
     <string name="budgeting">Budgeting</string>
     <string name="achievements_and_leaderboard"><![CDATA[Achievements & Leaderboard]]></string>
+    <string name="savings_amp_budgets"><![CDATA[Savings & Budgets]]></string>
+    <string name="target_amount">Target Amount</string>
+    <string name="add_goal">Add Goal</string>
+    <string name="limit_amount">Limit Amount</string>
+    <string name="add_budget">Add Budget</string>
 
 
 </resources>

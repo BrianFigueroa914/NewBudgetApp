@@ -1,6 +1,7 @@
 package com.example.newbudgetapp;
 
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,27 +38,28 @@ public class visualAnalytics extends AppCompatActivity {
             return insets;
         });
 
-        // Get references to all views
+        // Variables
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = mAuth.getCurrentUser();
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         PieChart pieChart = findViewById(R.id.pieChart);
 
-        FirebaseUser user = mAuth.getCurrentUser();
+
         if (user != null) {
             userID = user.getUid();
-            fetchExpenseData(); // Fetch and display existing data
+            fetchFilteredExpenses(); // Fetch and display existing data
         }
         else
             finish(); // Redirect to login
 
     }
 
-    private void fetchExpenseData() {
+    private void fetchFilteredExpenses() {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
                 if (expenseList != null) {
@@ -67,10 +69,14 @@ public class visualAnalytics extends AppCompatActivity {
                         String category = (String) expense.get("category");
                         float amount = ((Number) expense.get("amount")).floatValue();
 
-                        categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        // Exclude "Saved to Goal" entries
+                        if (!category.contains("Saved to Goal:")) {
+                            categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        }
                     }
 
-                    generatePieChart(categoryTotals); // Pass categorized totals to Pie Chart method
+                    // Use the categoryTotals map as needed (e.g., update UI or generate Pie Chart)
+                    generatePieChart(categoryTotals);
                 }
             }
         });
@@ -84,8 +90,9 @@ public class visualAnalytics extends AppCompatActivity {
             entries.add(new PieEntry(entry.getValue(), entry.getKey())); // Expense amount and category name
         }
 
-        PieDataSet dataSet = new PieDataSet(entries, "Expense Distribution");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        PieDataSet dataSet = new PieDataSet(entries, "- Expense Breakdown");
+
+        dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
         dataSet.setValueTextSize(12f);
 
         PieData pieData = new PieData(dataSet);
