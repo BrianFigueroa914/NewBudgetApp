@@ -121,13 +121,13 @@ public class visualAnalytics extends AppCompatActivity {
         entertainmentProgress.setProgress((int) entertainmentTotal);
         otherProgress.setProgress((int) otherTotal);
 
-        rentText.setText("Rent: $" + rentTotal);
-        groceryText.setText("Grcoeries: $" + groceryTotal);
-        utilitiesText.setText("Utilities: $" + utilitiesTotal);
-        transportationText.setText("Transportation: $" + transportationTotal);
-        goingOutText.setText("Going Out: $" + goingOutTotal);
-        entertainmentText.setText("Entertainment: $" + entertainmentTotal);
-        otherText.setText("Other: $" + otherTotal);
+        rentText.setText(String.format("Rent: $%.2f" , rentTotal));
+        groceryText.setText(String.format("Grcoeries: $%.2f" , groceryTotal));
+        utilitiesText.setText(String.format("Utilities: $%.2f" , utilitiesTotal));
+        transportationText.setText(String.format("Transportation: $%.2f" , transportationTotal));
+        goingOutText.setText(String.format("Going Out: $%.2f" , goingOutTotal));
+        entertainmentText.setText(String.format("Entertainment: $%.2f" , entertainmentTotal));
+        otherText.setText(String.format("Other: $%.2f" , otherTotal));
     }
 
     private void generatePieChart(Map<String, Float> categoryTotals) {
