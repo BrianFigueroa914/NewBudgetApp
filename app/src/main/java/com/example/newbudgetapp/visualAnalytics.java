@@ -89,19 +89,45 @@ public class visualAnalytics extends AppCompatActivity {
         // Retrieve progress bars by ID
         ProgressBar rentProgress = findViewById(R.id.rentProgressbar);
         ProgressBar groceryProgress = findViewById(R.id.groceryProgressbar);
+        ProgressBar utilitiesProgress = findViewById(R.id.utilitiesProgressbar);
+        ProgressBar goingOutProgress = findViewById(R.id.goingOutProgressbar);
+        ProgressBar transportationProgress = findViewById(R.id.transportationProgressbar);
+        ProgressBar entertainmentProgress = findViewById(R.id.entertainmentProgressbar);
+        ProgressBar otherProgress = findViewById(R.id.otherProgressbar);
 
         TextView rentText = findViewById(R.id.rentText);
-        TextView foodText = findViewById(R.id.groceryText);
+        TextView groceryText = findViewById(R.id.groceryText);
+        TextView utilitiesText = findViewById(R.id.utilitiesText);
+        TextView goingOutText = findViewById(R.id.goingOutText);
+        TextView transportationText = findViewById(R.id.transportationText);
+        TextView entertainmentText = findViewById(R.id.entertainmentText);
+        TextView otherText = findViewById(R.id.otherText);
+
 
         // Set dynamic progress based on Firestore data
         float rentTotal = categoryTotals.getOrDefault("Rent", 0f);
         float groceryTotal = categoryTotals.getOrDefault("Groceries", 0f);
+        float utilitiesTotal = categoryTotals.getOrDefault("Utilities", 0f);
+        float transportationTotal = categoryTotals.getOrDefault("Transportation", 0f);
+        float goingOutTotal = categoryTotals.getOrDefault("Going Out", 0f);
+        float entertainmentTotal = categoryTotals.getOrDefault("Entertainment", 0f);
+        float otherTotal = categoryTotals.getOrDefault("Other", 0f);
 
         rentProgress.setProgress((int) rentTotal);
         groceryProgress.setProgress((int) groceryTotal);
+        utilitiesProgress.setProgress((int) utilitiesTotal);
+        transportationProgress.setProgress((int) transportationTotal);
+        goingOutProgress.setProgress((int) goingOutTotal);
+        entertainmentProgress.setProgress((int) entertainmentTotal);
+        otherProgress.setProgress((int) otherTotal);
 
         rentText.setText("Rent: $" + rentTotal);
-        foodText.setText("Grcoeries: $" + groceryTotal);
+        groceryText.setText("Grcoeries: $" + groceryTotal);
+        utilitiesText.setText("Utilities: $" + utilitiesTotal);
+        transportationText.setText("Transportation: $" + transportationTotal);
+        goingOutText.setText("Going Out: $" + goingOutTotal);
+        entertainmentText.setText("Entertainment: $" + entertainmentTotal);
+        otherText.setText("Other: $" + otherTotal);
     }
 
     private void generatePieChart(Map<String, Float> categoryTotals) {
@@ -119,7 +145,7 @@ public class visualAnalytics extends AppCompatActivity {
         colors.add(ContextCompat.getColor(this, R.color.aqua_cyan));
 
         for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
-            entries.add(new PieEntry(entry.getValue(), entry.getKey())); // Expense amount and category name
+            entries.add(new PieEntry(entry.getValue(), shortenCategoryName(entry.getKey()))); // Expense amount and category name
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
@@ -135,9 +161,17 @@ public class visualAnalytics extends AppCompatActivity {
         pieChart.getDescription().setEnabled(false);
         pieChart.setDrawEntryLabels(false);
         pieChart.setUsePercentValues(true);
+        pieChart.getLegend().setMaxSizePercent(1f);
         pieChart.animateY(1000);
+
         pieChart.invalidate(); // Refresh chart
     }
+
+    private String shortenCategoryName(String category) {
+        return category.length() > 7 ? category.substring(0, 7) + "-" : category;
+    }
+
+
     public static class PercentFormatter extends ValueFormatter {
 
         public PercentFormatter(PieChart pieChart) {
