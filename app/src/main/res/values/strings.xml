@@ -56,6 +56,11 @@
     <string name="remaining">Remaining</string>
     <string name="budgeting">Budgeting</string>
     <string name="achievements_and_leaderboard"><![CDATA[Achievements & Leaderboard]]></string>
+    <string name="other">Other</string>
+    <string name="entertainment">Entertainment</string>
+    <string name="transportation">Transportation</string>
+    <string name="going_out">Going Out</string>
+    <string name="utilities">Utilities</string>
 
 
 </resources>
