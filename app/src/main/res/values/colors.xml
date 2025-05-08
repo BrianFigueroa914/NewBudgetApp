@@ -5,5 +5,13 @@
     <color name="emerald">#50C878</color>
     <color name="jade">#00A86B</color>
     <color name="taupe">#baa68e</color>
+    <color name="bright_red_orange">#FF5733</color>
+    <color name="neon_green">#33FF57</color>
+    <color name="deep_blue">#3357FF</color>
+    <color name="hot_pink">#FF33A1</color>
+    <color name="electric_yellow">#FFC300</color>
+    <color name="vibrant_purple">#8D33FF</color>
+    <color name="aqua_cyan">#33FFF5</color>
+    <color name="charcoal_gray">#333333</color>
     <color name="transparent">#00000000</color>
 </resources>
