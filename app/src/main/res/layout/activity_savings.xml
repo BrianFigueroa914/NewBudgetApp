@@ -16,8 +16,7 @@
             android:id="@+id/savingsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Savings &amp; Budgets"
-
+            android:text="@string/savings_amp_budgets"
             android:textColor="@color/taupe"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -41,7 +40,7 @@
                     android:id="@+id/goalTargetName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Goal Name"
+                    android:hint="@string/goal_name"
                     android:inputType="text"
                     android:background="@drawable/custom_edit_text"
                     android:padding="12dp" />
@@ -50,7 +49,7 @@
                     android:id="@+id/savingsTargetInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Target Amount"
+                    android:hint="@string/target_amount"
                     android:inputType="numberDecimal"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/custom_edit_text"
@@ -60,7 +59,7 @@
                     android:id="@+id/selectDeadlineBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Select Deadline"
+                    android:text="@string/select_deadline"
                     android:layout_marginTop="10dp"
                     android:backgroundTint="@color/jade"
                     android:textColor="#212121" />
@@ -69,7 +68,7 @@
                     android:id="@+id/deadlineDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Deadline: Not Set"
+                    android:text="@string/deadline_not_set"
                     android:textColor="@color/black"
                     android:layout_marginTop="10dp" />
 
@@ -77,7 +76,7 @@
                     android:id="@+id/updateGoalBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Add Goal"
+                    android:text="@string/add_goal"
                     android:layout_marginTop="16dp"
                     android:backgroundTint="@color/jade"
                     android:textColor="#212121" />
@@ -118,7 +117,7 @@
                     android:id="@+id/budgetLimitInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Limit Amount"
+                    android:hint="@string/limit_amount"
                     android:inputType="numberDecimal"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/custom_edit_text"
@@ -128,7 +127,7 @@
                     android:id="@+id/addBudgetBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Add Budget"
+                    android:text="@string/add_budget"
                     android:layout_marginTop="16dp"
                     android:backgroundTint="@color/jade"
                     android:textColor="#212121" />

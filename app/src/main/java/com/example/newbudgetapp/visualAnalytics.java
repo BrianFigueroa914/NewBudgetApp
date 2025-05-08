@@ -37,12 +37,12 @@ public class visualAnalytics extends AppCompatActivity {
             return insets;
         });
 
-        // Get references to all views
+        // Variables
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = mAuth.getCurrentUser();
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         PieChart pieChart = findViewById(R.id.pieChart);
 
-        FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             userID = user.getUid();
             fetchExpenseData(); // Fetch and display existing data
@@ -85,7 +85,7 @@ public class visualAnalytics extends AppCompatActivity {
             entries.add(new PieEntry(entry.getValue(), entry.getKey())); // Expense amount and category name
         }
 
-        PieDataSet dataSet = new PieDataSet(entries, "Expense Distribution");
+        PieDataSet dataSet = new PieDataSet(entries, "- Expense Breakdown");
         dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
         dataSet.setValueTextSize(12f);
 
