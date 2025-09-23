@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,7 +35,10 @@ public class settings2 extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("broadcast receiver", "Alarm frequency: " + frequency);
+            //get frequency variable
+            SharedPreferences sharedPreferences = context.getSharedPreferences("NotificationPreferences", MODE_PRIVATE);
+            frequency = sharedPreferences.getInt("notification_preferences", 0);
+            Log.d("sharedpreferencessetonreceive", "Alarm frequency: " + frequency);
 
             createNotificationChannel(context);
             createNotification(context);
@@ -92,10 +96,17 @@ public class settings2 extends AppCompatActivity {
     TextInputLayout optionTextInput;
     Button confirmButton;
     ImageButton settings2BackBtn;
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
     static int frequency;
     static int alarmRequestCode = 1045;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //get frequency variable
+        sharedPreferences = getSharedPreferences("NotificationPreferences", MODE_PRIVATE);
+        frequency = sharedPreferences.getInt("notification_preferences", 0);
+        Log.d("sharedpreferencessetoncreate", "Alarm frequency: " + frequency);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings2);
 
@@ -104,6 +115,7 @@ public class settings2 extends AppCompatActivity {
         confirmButton = findViewById(R.id.setAlarmBtn);
 
         settings2BackBtn = findViewById(R.id.settings2BackBtn);
+
 
         //button to set alarm
         confirmButton.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +128,18 @@ public class settings2 extends AppCompatActivity {
                     String selectedValue = autoCompleteTextView.getText().toString();
                     Log.d("on click", "selected value: " + selectedValue);
                     frequency = getinputValue(selectedValue);
+
+
+                    //write frequency variable to shared preferences
+                    sharedPreferences = getSharedPreferences("NotificationPreferences", MODE_PRIVATE);
+                    editor = sharedPreferences.edit();
+                    editor.putInt("notification_preferences", frequency);
+                    editor.apply();
+
+                    //read frequency variable & send to setAlarm
+                    sharedPreferences = getSharedPreferences("NotificationPreferences", MODE_PRIVATE);
+                    frequency = sharedPreferences.getInt("notification_preferences", 0);
+
                     setAlarm(getApplicationContext(), frequency);
                     Toast.makeText(settings2.this, "Option saved!", Toast.LENGTH_SHORT).show();
                 }
@@ -131,6 +155,7 @@ public class settings2 extends AppCompatActivity {
         });
 
     }
+
 
     private int getinputValue(String string) {
         switch(string) {
@@ -157,11 +182,11 @@ public class settings2 extends AppCompatActivity {
     }
 
     @SuppressLint("ScheduleExactAlarm")
-    private void setAlarm(Context applicationContext, int frequency) {
+    public static void setAlarm(Context applicationContext, int frequency) {
         long interval;
 
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 12);
+        calendar.set(Calendar.HOUR_OF_DAY, 5);
         calendar.set(Calendar.MINUTE, 30);
         calendar.set(Calendar.SECOND, 0);
 

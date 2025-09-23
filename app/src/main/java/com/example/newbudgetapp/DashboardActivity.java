@@ -1,26 +1,21 @@
 package com.example.newbudgetapp;
-import com.example.newbudgetapp.AchievementsActivity;
-
+import com.github.mikephil.charting.components.Legend;
+import com.google.firebase.firestore.Source;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.components.LimitLine;
 
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -42,13 +37,73 @@ import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity {
 
-    private boolean isIncomeMode = true;
     private LineChart lineChart;
     private List<Entry> incomeEntries = new ArrayList<>();
     private List<String> dayLabels = new ArrayList<>();
-    private String[] categories = {"Rent", "Groceries", "Utilities", "Going Out", "Transportation", "Entertainment", "Other"};
     private String userID;
     private com.google.firebase.Timestamp lastTimestamp = null;
+    private FirebaseAuth mAuth;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.dashboard_activity);
+
+        TextView usernameText = findViewById(R.id.usernameText);
+        lineChart = findViewById(R.id.lineChart);
+        TextView monthLabel = findViewById(R.id.monthLabel);
+        CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
+        CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
+        CardView savingsBtn = findViewById(R.id.savingsCardBtn);
+        CardView visualsBtn = findViewById(R.id.visualsCardBtn);
+        CardView achievementsCardBtn = findViewById(R.id.achievementsCardBtn);
+        CardView settingsCardBtn = findViewById(R.id.settingsCardBtn);
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            userID = user.getUid();
+            FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+            DocumentReference userDoc = budgetData.collection("Users").document(userID);
+            userDoc.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String username = documentSnapshot.getString("username");
+                    if (username != null && !username.isEmpty()) {
+                        usernameText.setText("Welcome " + username);
+                    }
+                }
+            });
+            prepareChartDataForCurrentMonth();
+        } else {
+            finish();
+        }
+
+        String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
+        monthLabel.setText(currentMonth + " Summary");
+
+        incomeCardBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, IncomeActivity.class);
+            startActivity(intent);
+        });
+
+        expenseCardBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, AddExpenseActivity.class);
+            startActivityForResult(intent, 1001);
+        });
+
+        savingsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, SavingsActivity.class)));
+        visualsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, visualAnalytics.class)));
+        achievementsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class)));
+        settingsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, settingsHome.class)));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        prepareChartDataForCurrentMonth();
+    }
+
     private void addGoalLineToChart(float goalAmount) {
         LimitLine goalLine = new LimitLine(goalAmount, "Goal: $" + (int) goalAmount);
         goalLine.setLineColor(Color.MAGENTA);
@@ -61,120 +116,15 @@ public class DashboardActivity extends AppCompatActivity {
         leftAxis.addLimitLine(goalLine);
     }
 
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.dashboard_activity);
-
-        TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
-        TextView usernameText = findViewById(R.id.usernameText);
-        lineChart = findViewById(R.id.lineChart);
-        EditText textHintInput = findViewById(R.id.monetaryInput);
-        Button addDataBtn = findViewById(R.id.addDataBtn);
-        Spinner expenseCategorySpinner = findViewById(R.id.expenseCategorySpinner);
-        TextView monthLabel = findViewById(R.id.monthLabel);
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-
-        CardView incomeCardBtn = findViewById(R.id.incomeCardBtn);
-        CardView expenseCardBtn = findViewById(R.id.expenseCardBtn);
-        CardView savingsBtn = findViewById(R.id.savingsCardBtn);
-        CardView visualsBtn = findViewById(R.id.visualsCardBtn);
-        CardView achievementsCardBtn = findViewById(R.id.achievementsCardBtn);
-        CardView settingsCardBtn = findViewById(R.id.settingsCardBtn);
-
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            userID = user.getUid();
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            DocumentReference userDoc = db.collection("Users").document(userID);
-            userDoc.get().addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    String username = documentSnapshot.getString("username");
-                    if (username != null && !username.isEmpty()) {
-                        usernameText.setText("Welcome " + username);
-                    }
-                }
-            });
-
-            // ✅ INITIAL LOAD OF CHART DATA
-            prepareChartDataForCurrentMonth();  // This sets up the chart and lastTimestamp
-        } else {
-            finish(); // No user logged in
-        }
-
-        // Set current month label
-        String currentMonth = new SimpleDateFormat("MMMM", Locale.getDefault()).format(new Date());
-        monthLabel.setText(currentMonth + " Summary");
-
-        // Handle input
-        addDataBtn.setOnClickListener(v -> {
-            String inputAmount = textHintInput.getText().toString().trim();
-
-            if (inputAmount.isEmpty()) {
-                Toast.makeText(DashboardActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            try {
-                float amount = Float.parseFloat(inputAmount);
-                if (Float.isNaN(amount) || Float.isInfinite(amount)) throw new NumberFormatException();
-
-                if (isIncomeMode) {
-                    storeIncomeData(userID, amount);  // This now calls prepareChartAppend()
-                } else {
-                    String selectedCategory = expenseCategorySpinner.getSelectedItem().toString();
-                    storeExpenseData(userID, selectedCategory, amount);  // Also calls prepareChartAppend()
-                }
-
-                textHintInput.setText("");  // Clear input
-
-            } catch (NumberFormatException e) {
-                Toast.makeText(DashboardActivity.this, "Invalid number. Please enter a valid amount.", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Set up category spinner
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        expenseCategorySpinner.setAdapter(adapter);
-
-        expenseCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Optional: do something with selectedCategory
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        // Mode toggle buttons
-        incomeCardBtn.setOnClickListener(v -> {
-            isIncomeMode = true;
-            textHintInput.setHint("Enter income");
-            addDataBtn.setText("Add Income");
-            expenseCategorySpinner.setVisibility(View.GONE);
-        });
-
-        expenseCardBtn.setOnClickListener(v -> {
-            isIncomeMode = false;
-            textHintInput.setHint("Enter expense");
-            addDataBtn.setText("Add Expense");
-            expenseCategorySpinner.setVisibility(View.VISIBLE);
-        });
-
-        // Navigation buttons
-        savingsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, SavingsActivity.class)));
-        visualsBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, visualAnalytics.class)));
-        achievementsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, AchievementsActivity.class)));
-        settingsCardBtn.setOnClickListener(v -> startActivity(new Intent(DashboardActivity.this, settingsHome.class)));
+    private int generatePastelColor(String key) {
+        int hash = Math.abs(key.hashCode());
+        int red = (hash % 128) + 127;
+        int green = ((hash / 128) % 128) + 127;
+        int blue = ((hash / 16384) % 128) + 127;
+        return Color.rgb(red, green, blue);
     }
 
-
-    //Methods
+    // Methods
     private void prepareChartDataForCurrentMonth() {
         incomeEntries.clear();
         dayLabels.clear();
@@ -187,13 +137,10 @@ public class DashboardActivity extends AppCompatActivity {
                 List<Map<String, Object>> incomeList = (List<Map<String, Object>>) task.getResult().get("incomeEntries");
                 List<Map<String, Object>> expenseList = (List<Map<String, Object>>) task.getResult().get("expenseEntries");
 
-                // Use a list of timestamped changes (positive for income, negative for expense)
                 List<Map<String, Object>> allEntries = new ArrayList<>();
-
                 if (incomeList != null) allEntries.addAll(incomeList);
                 if (expenseList != null) allEntries.addAll(expenseList);
 
-                // Sort all entries by timestamp
                 allEntries.sort((a, b) -> {
                     Date dateA = ((com.google.firebase.Timestamp) a.get("timestamp")).toDate();
                     Date dateB = ((com.google.firebase.Timestamp) b.get("timestamp")).toDate();
@@ -201,137 +148,177 @@ public class DashboardActivity extends AppCompatActivity {
                 });
 
                 float runningBalance = 0f;
-
                 for (Map<String, Object> entry : allEntries) {
                     float amount = ((Number) entry.get("amount")).floatValue();
-
-                    // Check if it's an expense
                     if (entry.containsKey("category")) {
                         amount = -amount;
                     }
 
                     runningBalance += amount;
-
                     incomeEntries.add(new Entry(incomeEntries.size(), runningBalance));
 
-                    // Label: use full date (e.g., "May 5")
                     Date date = ((com.google.firebase.Timestamp) entry.get("timestamp")).toDate();
                     String label = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
                     dayLabels.add(label);
                 }
 
-                if (!allEntries.isEmpty()) {
-                    Map<String, Object> lastEntry = allEntries.get(allEntries.size() - 1);
-                    lastTimestamp = (com.google.firebase.Timestamp) lastEntry.get("timestamp");
-                }
-
-                // ✅ Fetch savings goal and draw goal line
-                DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("Users").document(userID);
-                userDocRef.get().addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        Map<String, Object> savingsGoal = (Map<String, Object>) doc.get("savingsGoal");
-                        if (savingsGoal != null && savingsGoal.containsKey("goalAmount")) {
-                            float goalValue = ((Number) savingsGoal.get("goalAmount")).floatValue();
-                            addGoalLineToChart(goalValue);
-                        }
-                    }
-                });
-
-
-                updateChart();
-            } else {
-                Toast.makeText(DashboardActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                updateChart();  // Redraws balance and goal lines
             }
         });
     }
 
-
     private void updateChart() {
-
         TextView incomeBalanceText = findViewById(R.id.incomeBalanceText);
 
         if (!incomeEntries.isEmpty()) {
             float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
             incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
+            storeBalanceData(latestBalance);
+
         } else {
             incomeBalanceText.setText("Balance: $0.00");
         }
 
-
-        // ✅ Update visible balance
-        if (!incomeEntries.isEmpty()) {
-            float latestBalance = incomeEntries.get(incomeEntries.size() - 1).getY();
-            incomeBalanceText.setText("Balance: $" + String.format(Locale.getDefault(), "%.2f", latestBalance));
-        }
-
         LineDataSet balanceLine = new LineDataSet(incomeEntries, "Balance");
         balanceLine.setColor(Color.GREEN);
-
-        // === Balance line dataset ===
         balanceLine.setDrawCircles(false);
         balanceLine.setLineWidth(2f);
         balanceLine.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         balanceLine.setDrawValues(true);
 
-        LineData lineData = new LineData(balanceLine);
-        lineChart.setData(lineData);
-
-        // === Calculate min/max Y from data entries ===
-        final float[] minY = {0f};
-        final float[] maxY = {0f};
-
-        for (Entry entry : incomeEntries) {
-            float y = entry.getY();
-            if (y < minY[0]) minY[0] = y;
-            if (y > maxY[0]) maxY[0] = y;
-        }
-
-        // === Fetch savings goal and apply Y-axis scaling ===
-        DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("Users").document(userID);
-        userDocRef.get().addOnSuccessListener(doc -> {
-            final float[] goalAmount = new float[1]; // goal wrapper for lambda
-
-            if (doc.exists()) {
-                Map<String, Object> savingsGoal = (Map<String, Object>) doc.get("savingsGoal");
-                if (savingsGoal != null && savingsGoal.containsKey("goalAmount")) {
-                    goalAmount[0] = ((Number) savingsGoal.get("goalAmount")).floatValue();
-
-                    // Update Y-axis bounds to include goal line
-                    YAxis leftAxis = lineChart.getAxisLeft();
-                    leftAxis.removeAllLimitLines();  // Optional: remove previous goal lines
-
-                    // Add goal line
-                    LimitLine goalLine = new LimitLine(goalAmount[0], "Goal: $" + (int) goalAmount[0]);
-                    goalLine.setLineColor(Color.MAGENTA);
-                    goalLine.setLineWidth(2f);
-                    goalLine.setTextColor(Color.MAGENTA);
-                    goalLine.setTextSize(12f);
-                    leftAxis.addLimitLine(goalLine);
-
-                    // Apply smart scaling
-                    leftAxis.setAxisMinimum(minY[0] - 50);
-                    leftAxis.setAxisMaximum(Math.max(maxY[0], goalAmount[0]) + 50);
+        balanceLine.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getPointLabel(Entry entry) {
+                if (!incomeEntries.isEmpty() && entry.getX() == incomeEntries.get(incomeEntries.size() - 1).getX()) {
+                    return String.valueOf((int) entry.getY());
                 }
+                return "";
             }
-
-            lineChart.invalidate(); // Refresh chart after goal line and axis are set
         });
 
-        // === Other visual settings ===
-        lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(true);
-        lineChart.getAxisRight().setEnabled(false);
+        List<ILineDataSet> allDataSets = new ArrayList<>();
+        allDataSets.add(balanceLine); // Add main balance line
 
-        XAxis xAxis = lineChart.getXAxis();
-        xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
-        xAxis.setGranularity(1f);
-        xAxis.setLabelRotationAngle(-45);
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextColor(Color.DKGRAY);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = db.collection("Users").document(userID);
 
-        lineChart.getAxisLeft().setTextColor(Color.DKGRAY);
+        userDoc.get(Source.SERVER).addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                List<Map<String, Object>> goalsList = (List<Map<String, Object>>) doc.get("savingsGoals");
+                List<Map<String, Object>> budgetList = (List<Map<String, Object>>) doc.get("budgets");
+
+                YAxis leftAxis = lineChart.getAxisLeft();
+                leftAxis.removeAllLimitLines();  // Clear old goals
+
+                float minY = Float.MAX_VALUE;
+                float maxY = Float.MIN_VALUE;
+                for (Entry entry : incomeEntries) {
+                    float y = entry.getY();
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+
+                float highestGoal = maxY;
+
+                // Draw savings goals
+                if (goalsList != null) {
+                    for (Map<String, Object> goal : goalsList) {
+                        if (goal.containsKey("goalAmount") && goal.containsKey("goalName")) {
+                            float amount = ((Number) goal.get("goalAmount")).floatValue();
+                            String name = (String) goal.get("goalName");
+
+                            int pastelColor = generatePastelColor(name);
+
+                            LimitLine goalLine = new LimitLine(amount, name + ": $" + (int) amount);
+                            goalLine.setLineColor(pastelColor);
+                            goalLine.setTextColor(pastelColor);
+                            goalLine.setLineWidth(2f);
+                            goalLine.setTextSize(10f);
+                            leftAxis.addLimitLine(goalLine);
+
+                            Entry dummyEntry = new Entry(0, 0);
+                            LineDataSet goalLegend = new LineDataSet(Collections.singletonList(dummyEntry), name + ": $" + (int) amount);
+                            goalLegend.setColor(pastelColor);
+                            goalLegend.setDrawValues(false);
+                            goalLegend.setDrawCircles(false);
+                            goalLegend.setLineWidth(0f);
+                            goalLegend.setHighlightEnabled(false);
+                            goalLegend.setVisible(false);
+                            allDataSets.add(goalLegend);
+
+                            if (amount > highestGoal) highestGoal = amount;
+                        }
+                    }
+                }
+
+                // Draw total budget limit line
+                if (budgetList != null && !budgetList.isEmpty()) {
+                    float totalBudgetLimit = 0f;
+                    for (Map<String, Object> b : budgetList) {
+                        if (b.containsKey("limit")) {
+                            totalBudgetLimit += ((Number) b.get("limit")).floatValue();
+                        }
+                    }
+
+                    LimitLine budgetLine = new LimitLine(totalBudgetLimit, "Budget Limit: $" + (int) totalBudgetLimit);
+                    budgetLine.setLineColor(Color.RED);
+                    budgetLine.setTextColor(Color.RED);
+                    budgetLine.setLineWidth(2f);
+                    budgetLine.setTextSize(12f);
+                    leftAxis.addLimitLine(budgetLine);
+
+                    // Update Y max if needed
+                    if (totalBudgetLimit > highestGoal) highestGoal = totalBudgetLimit;
+                }
+
+                // Apply all datasets
+                lineChart.setData(new LineData(allDataSets));
+
+                leftAxis.setAxisMinimum(minY - 50);
+                leftAxis.setAxisMaximum(highestGoal + 50);
+                leftAxis.setTextColor(Color.DKGRAY);
+
+                lineChart.getAxisRight().setEnabled(false);
+                lineChart.getDescription().setEnabled(false);
+
+                Legend legend = lineChart.getLegend();
+                legend.setEnabled(true);
+                legend.setWordWrapEnabled(true);
+                legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+                legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+                legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+                legend.setDrawInside(false);
+                legend.setTextSize(12f);
+
+                lineChart.setExtraBottomOffset(48f);
+
+                XAxis xAxis = lineChart.getXAxis();
+                xAxis.setValueFormatter(new DayValueFormatter(dayLabels));
+                xAxis.setGranularity(1f);
+                xAxis.setLabelRotationAngle(-45);
+                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+                xAxis.setTextColor(Color.DKGRAY);
+
+                lineChart.invalidate(); // Redraw
+            }
+        });
     }
 
+    private void storeBalanceData(float balance) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = db.collection("Users").document(userID);
+
+        Map<String, Object> updateData = new HashMap<>();
+        updateData.put("currentBalance", balance);
+
+        userDoc.update(updateData)
+                .addOnSuccessListener(aVoid -> {
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(DashboardActivity.this, "Failed to store balance", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                });
+    }
 
 
     // Custom formatter to show day numbers (12, 13, etc.)
@@ -353,7 +340,7 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    //Grab income data
+/*    // Grab income data
     private void storeIncomeData(String userID, float income) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
         DocumentReference userDoc = budgetData.collection("Users").document(userID);
@@ -372,7 +359,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income updated successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartDataForCurrentMonth(); // ✅ ONLY run this when data is saved
+                                prepareChartDataForCurrentMonth(); // ONLY run this when data is saved
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to update income", Toast.LENGTH_SHORT).show();
                             }
@@ -389,7 +376,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Income saved successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartDataForCurrentMonth(); // ✅ now safe to refresh
+                                prepareChartDataForCurrentMonth(); //  Now safe to refresh
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to save income", Toast.LENGTH_SHORT).show();
                             }
@@ -397,7 +384,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private void storeExpenseData(String userID, String category, float expense) {
         FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
@@ -418,7 +404,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(updateTask -> {
                             if (updateTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense updated successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartAppend();// ✅ Only after it's saved
+                                prepareChartAppend();//  Only after it's saved
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to update expense", Toast.LENGTH_SHORT).show();
                             }
@@ -436,7 +422,7 @@ public class DashboardActivity extends AppCompatActivity {
                         .addOnCompleteListener(createTask -> {
                             if (createTask.isSuccessful()) {
                                 Toast.makeText(DashboardActivity.this, "Expense saved successfully", Toast.LENGTH_SHORT).show();
-                                prepareChartAppend();// ✅ Safe to refresh
+                                prepareChartAppend();//  Safe to refresh
                             } else {
                                 Toast.makeText(DashboardActivity.this, "Failed to save expense", Toast.LENGTH_SHORT).show();
                             }
@@ -446,8 +432,8 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void prepareChartAppend() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference userDoc = db.collection("Users").document(userID);
+        FirebaseFirestore budgetData = FirebaseFirestore.getInstance();
+        DocumentReference userDoc = budgetData.collection("Users").document(userID);
 
         userDoc.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
@@ -496,12 +482,8 @@ public class DashboardActivity extends AppCompatActivity {
 
                     lastTimestamp = (com.google.firebase.Timestamp) entry.get("timestamp"); // Update last seen
                 }
-
                 updateChart();
             }
         });
-    }
-
-    //Load previous session data for user
-
+    }*/
 }

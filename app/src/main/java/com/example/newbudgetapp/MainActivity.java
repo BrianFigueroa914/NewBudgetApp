@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        //variables
+        // Variables
         final TextView startBtn = findViewById(R.id.startBtn);
 
         startBtn.setOnClickListener(new View.OnClickListener() {
